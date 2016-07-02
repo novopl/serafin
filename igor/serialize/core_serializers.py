@@ -7,10 +7,10 @@ from itertools import chain
 from six import integer_types, string_types, binary_type
 from igor.js import jsobj
 from igor.traits import iterable, isfileobj
-from .base import serializer, Priority
+from .base import serializer, fast_serializer, Priority
 from .fieldspec import Fieldspec
 L = getLogger(__name__)
-kPrimitives = tuple(chain(
+PRIMITIVES = tuple(chain(
     integer_types,
     string_types,
     (float, binary_type, Date, Datetime, Decimal)
@@ -38,15 +38,7 @@ def serialize_dict(dct, fieldspec, dumpval, kwargs):
     return ret
 
 
-@serializer.add(Priority.HIGH, lambda o: isinstance(o, jsobj))
-def serialize_jsobj(obj, fieldspec, dumpval, kwargs):
-    if not isinstance(fieldspec, Fieldspec):
-        fieldspec = Fieldspec(fieldspec)
-
-    return serialize_dict(obj.serialize(), fieldspec, dumpval, kwargs)
-
-
-@serializer.add(Priority.HIGH, lambda o: isinstance(o, kPrimitives))
+@serializer.add(Priority.HIGH, lambda o: isinstance(o, PRIMITIVES))
 def serialize_primitive(obj, fieldspec, dumpval, kwargs):
     return dumpval('', obj)
 
@@ -79,6 +71,7 @@ def serialize_serializable(obj, fieldspec, dumpval, kwargs):
     return obj.serialize()
 
 
+@fast_serializer.add(Priority.LOW, lambda o: isinstance(o, object))
 @serializer.add(Priority.LOW, lambda o: isinstance(o, object))
 def serialize_object(obj, fieldspec, dumpval, kwargs):
     if not isinstance(fieldspec, Fieldspec):

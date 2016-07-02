@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys
 import re
-from six import string_types
+from six import string_types, iteritems
+from copy import deepcopy
+from collections import OrderedDict
 if sys.version_info >= (3, 0):
     from urllib.parse import parse_qsl
 else:
     from urlparse import parse_qsl
 
 kFieldPtrn = re.compile(r'{name}(\({members}\))?'.format(
-    name    = r'(?P<n>-?[\w\d_*]+)',
-    members = r'(?P<m>[\w\d_\-,*)(]+)'
+    name=r'(?P<name>-?[\w\d_*]+)',
+    members=r'(?P<members>[\w\d_\-,*)(]+)'
 ))
 
 
@@ -60,18 +62,42 @@ class Fieldspec(object):
     >>> 'field1' in fs
     False
 
+    **Implementation**
+
+    Fieldspec has 2 main variables that hold the spec. The ``fields`` and ``exclude``.
+    Exclude is much simplier, because it's just a list of strings with field names
+    that should be excluded at this level.
+
+    The ``fields`` member is a list of tuples ``(name, members)`` where name is the
+    fields name and members is the optional member spec **members** can be one of:
+        - None
+        - ``True`` if the subfield spec is just the field name, ie `field`.
+        - ``Fieldspec`` if the subfield has a fieldspec defined, ie `field(sub1,sub2).
+
+    If the fieldspec contains ``*`` it means at that level all fields are included by
+    default. You can still exclude them using ``-`` but by default all fields within
+    an object are included.
+
+    The special fieldspec `**` can be used and it means the same thing as ``*`` but
+    is applied recursively to all objects. **Be very careful with using it as it will
+    try to serialize EVERYTHING and in many cases you will run into problems.
+
+    TODO:
+        - Ability to specify max depth.
+        - Merging two specs together (union).
+        - Restricting one spec by another (intersection).
     """
-    def __init__(self, spec = '*'):
-        self.fields     = []
-        self.exclude    = []
-        self.spec       = spec
-        self.all        = False
+    def __init__(self, spec='*'):
+        self.fields = OrderedDict()
+        self.exclude = OrderedDict()
+        self.spec = spec
+        self.all = False
 
         if isinstance(spec, Fieldspec):
             # Clone
-            self.fields = list(spec.fields)
-            self.all    = spec.all
-            self.spec   = spec.spec
+            self.fields = deepcopy(spec.fields)
+            self.all = spec.all
+            self.spec = spec.spec
 
         elif isinstance(spec, string_types):
             self._parse(spec)
@@ -83,74 +109,64 @@ class Fieldspec(object):
         return len(self.fields) == 0 and not self.all
 
     def __contains__(self, name):
-        for fname, members in self.exclude:
-            if fname == name:
-                return False
+        if name in self.exclude:
+            return False
 
         if self.all:
             return True
 
-        for fname, members in self.fields:
-            if fname == name:
-                return members
-        return None
+        try:
+            return self.fields[name]
+        except KeyError:
+            return None
 
     def __getitem__(self, name):
-        for fname, members in self.exclude:
-            if fname == name:
-                return None
+        if name in self.exclude:
+            return None
 
         if self.spec == '**':
             return Fieldspec(self)
 
-        for fname, members in self.fields:
-            if fname == name:
-                return members
-
-        return self.all or None
+        try:
+            return self.fields[name]
+        except KeyError:
+            return self.all or None
 
     def __repr__(self):
-        return "<Fieldspec: {}>".format(
-            ','.join(f[0] for f in self.fields),
-            #','.join('-' + n for n, m in self.exclude)
-        )
+        include = ','.join(name for name in self.fields.keys())
+        exclude = ''
+        if self.exclude:
+            exclude = ','.join('-' + n for n, m in self.exclude)
+
+        return "<Fieldspec: {}{}>".format(include, exclude)
 
     def _parse(self, string):
+        """ Parse the spec string.
+        Args:
+            string (str):   A string representation of the fieldspec.
+
+        The string is split on the high level by commas and then processed. The parser
+        will take into account the parenthesis and skip them when looking for comas.
+        The members are parsed recursively.
+        """
         fields  = self._splitfields(string)
         for field in fields:
-            m       = kFieldPtrn.match(field)
-
+            m = kFieldPtrn.match(field)
             if not m:
                 raise ValueError("Invalid field specification")
 
-            name    = m.group('n')
+            name = m.group('name')
             if name[0] == '-':
                 name    = name[1:]
                 group   = self.exclude
             else:
                 group   = self.fields
 
-            membstr = m.group('m')
+            membstr = m.group('members')
             members = True if membstr is None else Fieldspec(membstr)
-            group.append((name, members))
+            group[name] = members
             if name in ('*', '**'):
                 self.all = True
-
-        #if not string:
-        #    return {'*': '*'}
-
-        ## <name>(<members>)
-        #pttrn   = re.compile(r'(?P<n>[\w\d_*]+)(\((?P<m>[\w\d_,*)(]+)\))?')
-        #fields  = self._splitfields(string)
-        #expand  = {}
-        #for field in fields:
-        #    m = pttrn.match(field)
-        #    name    = m.group('n')
-        #    members = m.group('m')
-        #    members = self._parse(members) if members else {'*': '*'}
-        #    expand[name] = members
-
-        #return expand or {'*': '*'}
 
     def _splitfields(self, string):
         """
@@ -165,35 +181,111 @@ class Fieldspec(object):
         ['one(mem1,mem2)', 'two', 'three']
 
         """
-        fields      = []
-        start       = 0
-        numparen    = 0
-        for i in range(len(string)):
-            ch = string[i]
+        fields = []
+        append = fields.append
+        start = 0
+        numparen = 0
+
+        for i, ch in enumerate(string):
             if ch == ',':
                 if i != start and numparen == 0:
-                    fields.append(string[start:i])
+                    append(string[start:i])
                     start = i + 1
             elif ch == '(':
                 numparen += 1
             elif ch == ')':
                 numparen -= 1
+
+        if numparen != 0:
+            raise ValueError("Unmatched parenthesis")
+
         fields.append(string[start:])
         return fields
 
-    def extend(self, fieldspec):
+    def merge(self, fieldspec):
         """ Extend fieldspec using a different one. The result should be
         the union of both.
+
+        .. notes:: If the field is in both specs and it's values are different
+        there is a conflict. The conflict can be resolved by merging the sub specs.
         """
-        raise NotImplementedError("Not yet implemented. Needs more thought.")
+        if isinstance(fieldspec, string_types):
+            fieldspec = Fieldspec(fieldspec)
+
+        if fieldspec.all:
+            self.all = True
+
+        for name, members in iteritems(fieldspec.fields):
+            try:
+                mymembers = self.fields[name]
+                # There already is a field like that, we need to sort out the conflict.
+                if mymembers != members:
+                    self.fields[name] = self._resolve_conflict(mymembers, members)
+            except KeyError:
+                # this fieldspec doesn't have the key yet
+                self.fields[name] = members
+
+        exclude = self.exclude
+        self.exclude = OrderedDict()
+        for name, members in iteritems(exclude):
+            try:
+                members = fieldspec.fields[name]
+                self.fields[name] = members
+            except KeyError:
+                self.exclude[name] = members
+
+        return self
+
+    def _resolve_conflict(self, mymembers, members):
+        """ Resolve conflicting members by mergin them. """
+        if isinstance(mymembers, Fieldspec):
+            if isinstance(members, Fieldspec):
+                return Fieldspec(mymembers).merge(members)
+            else:  # members == True:
+                return mymembers
+        else:  # mymembers == True:
+            return members
 
     def restrict(self, fieldspec):
         """ Restrict the current fieldspec by another one. The result should be
         the intersection of both.
         """
-        raise NotImplementedError("Not yet implemented. Needs more thought.")
+        if fieldspec.all:
+            common = frozenset(self.fields.keys())
+        else:
+            common = frozenset(self.fields.keys()) & frozenset(fieldspec.fields.keys())
+
+        self.exclude.update(fieldspec.exclude)
+
+        newfields = []
+        for name in common:
+            mymembers = self.fields[name]
+            try:
+                members = fieldspec.fields[name]
+                if mymembers != members:
+                    newfields.append((name, self._resolve_restrict_conflict(
+                        mymembers, members
+                    )))
+                    continue
+            except KeyError:
+                pass
+
+            if name not in self.exclude:
+                newfields.append((name, mymembers))
+
+        self.fields = OrderedDict(newfields)
+        return self
+
+    def _resolve_restrict_conflict(self, mymembers, members):
+        if isinstance(mymembers, Fieldspec):
+            if isinstance(members, Fieldspec):
+                return Fieldspec(mymembers).restrict(members)
+            if members is True:
+                return True
+        raise NotImplementedError("Not implemented")
 
     @classmethod
     def from_query(self, qs):
         qs  = dict(parse_qsl(qs)) if isinstance(qs, string_types) else qs
         return Fieldspec(qs.get('_fields', '*'))
+

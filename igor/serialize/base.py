@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from datetime import date as Date, datetime as Datetime
 from igor.enum import Enum
+from igor.traits import iterable, isfileobj
 from .fieldspec import Fieldspec
 
 
@@ -89,7 +90,12 @@ class Serializer(object):
 
         return decorator
 
-    def serialize(self, obj, fieldspec = '*', dumpval = dumpval, **kwargs):
+    def serialize(self, obj, fieldspec='*', dumpval=dumpval, **kwargs):
+        if fieldspec is None:
+            fieldspec = Fieldspec('*')
+        elif not isinstance(fieldspec, Fieldspec):
+            fieldspec = Fieldspec(fieldspec)
+
         serializer = self.find(obj)
         reraise = kwargs.get('reraise', True)
         try:
@@ -100,7 +106,7 @@ class Serializer(object):
                 raise
         return out
 
-    def find(self, obj, minpriority = Priority.LOW):
+    def find(self, obj, minpriority=Priority.LOW):
         """ Find serializer for the fiven object.
         Args:
             obj (anything):         The object you want the serializer for.
@@ -111,7 +117,7 @@ class Serializer(object):
             Serializer function if found or ``None``.
         """
         serializer = None
-        for priority in sorted(self.serializers.keys(), key = lambda x: -x):
+        for priority in sorted(self.serializers.keys(), key=lambda x: -x):
             if priority >= minpriority:
                 for s in self.serializers[priority]:
                     if s._serializer_check(obj):
@@ -127,7 +133,30 @@ class Serializer(object):
         return serializer
 
 
+class FastSerializer(Serializer):
+    def __init__(self):
+        super(FastSerializer, self).__init__()
+        self.add()
+
+    def find(self, obj, minpriority=Priority.LOW):
+        if obj is None:
+            return None
+        if isinstance(obj, dict):
+            return serialize_dict
+        elif isinstance(obj, PRIMITIVES):
+            return serialize_primitive
+        elif isfileobj(obj):
+            return serialize_file_handle
+        elif iterable(obj):
+            return serialize_iterable
+        elif hasattr(obj, 'serialize') and hasattr(obj.serialize, '__call__'):
+            return serialize_serializable
+
+        return super(FastSerializer, self).find(obj, minpriority)
+
+
 serializer = Serializer()
+fast_serializer = Serializer()
 
 
 def serialize(obj, fieldspec=None, dumpval=dumpval, **kwargs):
@@ -161,7 +190,7 @@ def serialize(obj, fieldspec=None, dumpval=dumpval, **kwargs):
     Here are a few examples of what fields would be selected by each
     fieldspec (second argument for ``serialize``):
 
-    >>> from restapi.serialize import serialize
+    >>> from igor.serialize import serialize
     >>> serialize(model, '*') == {
     ...     'field1': 10,
     ...     'field2': {},
@@ -213,8 +242,15 @@ def serialize(obj, fieldspec=None, dumpval=dumpval, **kwargs):
     True
 
     """
-    if fieldspec is None:
-        fieldspec = Fieldspec('*')
-    elif not isinstance(fieldspec, Fieldspec):
-        fieldspec = Fieldspec(fieldspec)
     return serializer.serialize(obj, fieldspec, dumpval, **kwargs)
+
+
+def fast_serialize(obj, fieldspec=None, dumpval=dumpval, **kwargs):
+    return fast_serializer.serialize(obj, fieldspec, dumpval, **kwargs)
+
+
+from .core_serializers import (
+    serialize_dict, serialize_file_handle, serialize_iterable,
+    serialize_primitive, serialize_serializable,
+    PRIMITIVES,
+)

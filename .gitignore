@@ -6,6 +6,7 @@
 # Symlinks for tests #
 ######################
 igor/*.py
+igor/util
 
 ##############
 # Temp files #
