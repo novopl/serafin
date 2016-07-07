@@ -38,6 +38,7 @@ def dumpval(name, value):
 class Serializer(object):
     """
     HIGH priority is for serializers with a strict selector.
+
     >>> @serializer.add(Priority.HIGH, lambda o: isinstance(o, Model))
     ... def serialize_model(model, fieldspec, dumpval, kwargs):
     ...     pass
@@ -58,12 +59,14 @@ class Serializer(object):
 
     MEDIUM priority since this will catch every iterable, and we might want
     a more custom serializer.
+
     >>> @serializer.add(Priority.MEDIUM, lambda o: iterable(o))
     ... def serialize_iterable(model, fieldspec, dumpval, kwargs):
     ...     pass
 
     Low because it will catch almost everything. This is a kind of general
     fallback if we don't have specialized serializer.
+
     >>> @serializer.add(Priority.LOW, lambda o: isinstance(o, object))
     ... def serialize_object(model, fieldspec, dumpval, kwargs):
     ...     pass
@@ -108,12 +111,17 @@ class Serializer(object):
 
     def find(self, obj, minpriority=Priority.LOW):
         """ Find serializer for the fiven object.
-        Args:
-            obj (anything):         The object you want the serializer for.
-            minpriority (Priority): The minimum priority of the serializer. Serializers
-                                    with lower priority won't be returned. This allows to
-                                    exclude fallback serializers from the search.
-        Returns:
+
+        :param obj:
+            The object you want the serializer for.
+
+        :param minpriority:
+            The minimum priority of the serializer. Serializers with lower priority
+            won't be returned. This allows to exclude fallback serializers from the
+            search.
+        :type minpriority: Priority
+
+        :returns:
             Serializer function if found or ``None``.
         """
         serializer = None
