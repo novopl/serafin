@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from collections import OrderedDict
 from datetime import date as Date, datetime as Datetime
 from igor.enum import Enum
 from igor.traits import iterable, isfileobj
+from igor.js import jsobj
+from six import iteritems, string_types
 from .fieldspec import Fieldspec
 
 
@@ -39,19 +42,19 @@ class Serializer(object):
     """
     HIGH priority is for serializers with a strict selector.
 
-    >>> @serializer.add(Priority.HIGH, lambda o: isinstance(o, Model))
+    >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, Model))
     ... def serialize_model(model, fieldspec, dumpval, kwargs):
     ...     pass
 
-    >>> @serializer.add(Priority.HIGH, lambda o: isinstance(o, dict))
+    >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, dict))
     ... def serialize_dict(model, fieldspec, dumpval, kwargs):
     ...     pass
 
-    >>> @serializer.add(Priority.HIGH, lambda o: isinstance(o, jsobj))
+    >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, jsobj))
     ... def serialize_jsobj(model, fieldspec, dumpval, kwargs):
     ...     pass
 
-    >>> @serializer.add(Priority.HIGH,
+    >>> @serializer.fuzzy(Priority.HIGH,
     ...     lambda o: isinstance(o, (int, float, str, unicode, bytes))
     ... )
     ... def serialize_primitive(model, fieldspec, dumpval, kwargs):
@@ -60,26 +63,33 @@ class Serializer(object):
     MEDIUM priority since this will catch every iterable, and we might want
     a more custom serializer.
 
-    >>> @serializer.add(Priority.MEDIUM, lambda o: iterable(o))
+    >>> @serializer.fuzzy(Priority.MEDIUM, lambda o: iterable(o))
     ... def serialize_iterable(model, fieldspec, dumpval, kwargs):
     ...     pass
 
     Low because it will catch almost everything. This is a kind of general
     fallback if we don't have specialized serializer.
 
-    >>> @serializer.add(Priority.LOW, lambda o: isinstance(o, object))
+    >>> @serializer.fuzzy(Priority.LOW, lambda o: isinstance(o, object))
     ... def serialize_object(model, fieldspec, dumpval, kwargs):
     ...     pass
     """
 
     def __init__(self):
         self.serializers = {}
+        self.classmap = OrderedDict()
 
-    def add(self, priority, check):
+    def strict(self, cls):
+        def decorator(fn):
+            self.classmap[cls] = fn
+            return fn
+        return decorator
+
+    def fuzzy(self, priority, check):
         def decorator(fn):
             """
             >>> ismodel = lambda o: isinstance(o, Model)
-            >>> @serializer.add.add(Priority.HIGH, ismodel)
+            >>> @serializer.fuzzy.fuzzy(Priority.HIGH, ismodel)
             ... def serialize_model(model, fieldspec, dumpval, kwargs):
             ...     # ...
             """
@@ -93,23 +103,31 @@ class Serializer(object):
 
         return decorator
 
-    def serialize(self, obj, fieldspec='*', dumpval=dumpval, **kwargs):
-        if fieldspec is None:
-            fieldspec = Fieldspec('*')
-        elif not isinstance(fieldspec, Fieldspec):
-            fieldspec = Fieldspec(fieldspec)
-
+    def raw_serialize(self, obj, fieldspec, context):
         serializer = self.find(obj)
-        reraise = kwargs.get('reraise', True)
         try:
-            out = serializer(obj, fieldspec, dumpval, kwargs = kwargs)
+            out = serializer(obj, fieldspec, context)
         except Exception as ex:
             out = "({}: {})".format(ex.__class__.__name__, str(ex))
-            if reraise:
+            if context.reraise:
                 raise
         return out
 
-    def find(self, obj, minpriority=Priority.LOW):
+    def serialize(self, obj, fieldspec='*', **kwargs):
+        if isinstance(fieldspec, string_types):
+            fieldspec = Fieldspec(fieldspec)
+        elif fieldspec is None:
+            fieldspec = Fieldspec('*')
+
+        context = jsobj(
+            dumpval=dumpval,
+            reraise=True,
+        )
+        context.update(kwargs)
+
+        return self.raw_serialize(obj, fieldspec, context)
+
+    def find_by_priority(self, obj, minpriority=Priority.LOW):
         """ Find serializer for the fiven object.
 
         :param obj:
@@ -140,34 +158,41 @@ class Serializer(object):
             ))
         return serializer
 
-
-class FastSerializer(Serializer):
-    def __init__(self):
-        super(FastSerializer, self).__init__()
-        self.add()
-
     def find(self, obj, minpriority=Priority.LOW):
         if obj is None:
             return None
+
+        cls = obj.__class__
+        # Check if we have a direct serializer for the class
+        serializer = self.classmap.get(cls)
+        if serializer is not None:
+            return serializer
+
+        # Hacky speedups
         if isinstance(obj, dict):
             return serialize_dict
-        elif isinstance(obj, PRIMITIVES):
+        if isinstance(obj, PRIMITIVES):
             return serialize_primitive
-        elif isfileobj(obj):
+        if isfileobj(obj):
             return serialize_file_handle
-        elif iterable(obj):
+        if iterable(obj):
             return serialize_iterable
-        elif hasattr(obj, 'serialize') and hasattr(obj.serialize, '__call__'):
+        if hasattr(obj, 'serialize') and hasattr(obj.serialize, '__call__'):
             return serialize_serializable
 
-        return super(FastSerializer, self).find(obj, minpriority)
+        # Look if we have direct serializer for a base class of obj
+        for c, serializer in iteritems(self.classmap):
+            if isinstance(obj, c):
+                return serializer
+
+        return self.find_by_priority(minpriority)
+
 
 
 serializer = Serializer()
-fast_serializer = Serializer()
 
 
-def serialize(obj, fieldspec=None, dumpval=dumpval, **kwargs):
+def serialize(obj, fieldspec=None, **context):
     """ This will serialize the object based on the fieldspec passed.
 
     Args:
@@ -250,11 +275,7 @@ def serialize(obj, fieldspec=None, dumpval=dumpval, **kwargs):
     True
 
     """
-    return serializer.serialize(obj, fieldspec, dumpval, **kwargs)
-
-
-def fast_serialize(obj, fieldspec=None, dumpval=dumpval, **kwargs):
-    return fast_serializer.serialize(obj, fieldspec, dumpval, **kwargs)
+    return serializer.serialize(obj, fieldspec, **context)
 
 
 from .core_serializers import (

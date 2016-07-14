@@ -2,7 +2,14 @@
 # -*- coding: utf-8 -*-
 import unittest
 import json
+from functools import partial
 from igor.serialize import serialize
+from igor.serialize import serializer
+from igor.js import jsobj
+
+
+class CustomClass(jsobj):
+    pass
 
 
 class TestSerialize(unittest.TestCase):
@@ -62,3 +69,16 @@ class TestSerialize(unittest.TestCase):
             },
             'field3': 20
         })
+
+    def test_context_is_being_passed(self):
+        @serializer.strict(CustomClass)
+        def custom_serialize(obj, fieldspec, context):
+            context.called()
+            self.assertIn('testval', context)
+            self.assertEqual(context.testval, 123)
+
+        tmp = jsobj(called=False)
+        obj = CustomClass(testval=321)
+        called = partial(setattr, tmp, 'called', True)
+        serialize(obj, '*', testval=123, called=called)
+        self.assertTrue(tmp.called)

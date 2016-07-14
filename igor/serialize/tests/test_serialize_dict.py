@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from unittest import TestCase
+from igor.js import jsobj
 from igor.serialize.base import dumpval
 from igor.serialize.fieldspec import Fieldspec
 from igor.serialize.core_serializers import serialize_dict
@@ -17,7 +18,8 @@ class TestSerializeDict(TestCase):
                 'field2': 'sub val'
             }
         }
-        output = serialize_dict(input, Fieldspec('*'), dumpval=dumpval, kwargs={})
+        ctx = jsobj(dumpval=dumpval)
+        output = serialize_dict(input, Fieldspec('*'), ctx)
         self.assertDictEqual(output, {
             'field1':  123,
             'field2':  "string",
@@ -26,6 +28,7 @@ class TestSerializeDict(TestCase):
         })
 
     def test_converts_string_to_Fieldspec(self):
-        output = serialize_dict({'test': 123}, '*', dumpval=dumpval, kwargs={})
+        ctx = jsobj(dumpval=dumpval)
+        output = serialize_dict({'test': 123}, Fieldspec('*'), ctx)
         self.assertDictEqual(output, {'test': 123})
 

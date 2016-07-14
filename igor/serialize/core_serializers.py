@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from collections import OrderedDict
 from logging import getLogger
 from datetime import date as Date, datetime as Datetime
 from decimal import Decimal
@@ -7,8 +8,7 @@ from itertools import chain
 from six import integer_types, string_types, binary_type
 from igor.js import jsobj
 from igor.traits import iterable, isfileobj
-from .base import serializer, fast_serializer, Priority
-from .fieldspec import Fieldspec
+from .base import serializer, Priority
 L = getLogger(__name__)
 PRIMITIVES = tuple(chain(
     integer_types,
@@ -17,66 +17,60 @@ PRIMITIVES = tuple(chain(
 ))
 
 
-@serializer.add(Priority.HIGH, lambda o: isinstance(o, dict))
-def serialize_dict(dct, fieldspec, dumpval, kwargs):
+@serializer.strict(OrderedDict)
+@serializer.strict(dict)
+@serializer.strict(jsobj)
+@serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, dict))
+def serialize_dict(dct, fieldspec, context):
     """ Serialize dictionary. """
     ret = {}
 
-    if not isinstance(fieldspec, Fieldspec):
-        fieldspec = Fieldspec(fieldspec)
-
-    if fieldspec.empty():
+    if fieldspec == True or fieldspec.empty():
         return {}
 
     for name, value in dct.items():
         if name in fieldspec:
             try:
-                ret[name] = serializer.serialize(value, fieldspec[name], dumpval,
-                                                 **kwargs)
+                ret[name] = serializer.raw_serialize(value, fieldspec[name], context)
             except ValueError:
                 pass
     return ret
 
 
-@serializer.add(Priority.HIGH, lambda o: isinstance(o, PRIMITIVES))
-def serialize_primitive(obj, fieldspec, dumpval, kwargs):
-    return dumpval('', obj)
+@serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, PRIMITIVES))
+def serialize_primitive(obj, fieldspec, context):
+    return context.dumpval('', obj)
 
 
-@serializer.add(Priority.HIGH, lambda o: o is None)
-def serialize_None(obj, fieldspec, dumpval, kwargs):
+@serializer.fuzzy(Priority.HIGH, lambda o: o is None)
+def serialize_None(obj, fieldspec, context):
     return None
 
 
-@serializer.add(Priority.MEDIUM, lambda o: not isfileobj(o) and iterable(o))
-def serialize_iterable(obj, fieldspec, dumpval, kwargs):
-    if not isinstance(fieldspec, Fieldspec):
-        fieldspec = Fieldspec(fieldspec)
-
+@serializer.strict(list)
+@serializer.strict(tuple)
+@serializer.fuzzy(Priority.MEDIUM, lambda o: not isfileobj(o) and iterable(o))
+def serialize_iterable(obj, fieldspec, context):
     ret = []
     for item in obj:
-        ret.append(serializer.serialize(item, fieldspec, dumpval, **kwargs))
+        ret.append(serializer.raw_serialize(item, fieldspec, context))
     return ret
 
 
-@serializer.add(Priority.MEDIUM, lambda o: isfileobj(o))
-def serialize_file_handle(obj, fieldspec, dumpval, kwargs):
+@serializer.fuzzy(Priority.MEDIUM, lambda o: isfileobj(o))
+def serialize_file_handle(obj, fieldspec, context):
     return '(file handle)'
 
-@serializer.add(
+@serializer.fuzzy(
     Priority.MEDIUM,
     lambda o: hasattr(o, 'serialize') and hasattr(o.serialize, '__call__')
 )
-def serialize_serializable(obj, fieldspec, dumpval, kwargs):
-    return obj.serialize()
+def serialize_serializable(obj, fieldspec, context):
+    return obj.serialize(fieldspec, context)
 
 
-@fast_serializer.add(Priority.LOW, lambda o: isinstance(o, object))
-@serializer.add(Priority.LOW, lambda o: isinstance(o, object))
-def serialize_object(obj, fieldspec, dumpval, kwargs):
-    if not isinstance(fieldspec, Fieldspec):
-        fieldspec = Fieldspec(fieldspec)
-
+@serializer.fuzzy(Priority.LOW, lambda o: isinstance(o, object))
+def serialize_object(obj, fieldspec, context):
     if fieldspec.empty():
         return {}
 
@@ -93,7 +87,6 @@ def serialize_object(obj, fieldspec, dumpval, kwargs):
             return False
 
     ret = {}
-    reraise = kwargs.get('reraise', True)
     for name in dir(obj):
         if not isinstance(name, string_types):
             pass
@@ -102,11 +95,10 @@ def serialize_object(obj, fieldspec, dumpval, kwargs):
                 value = getattr(obj, name)
             except Exception as ex:
                 value = "({}: {})".format(ex.__class__.__name__, str(ex))
-                if reraise:
+                if context.reraise:
                     raise
 
             if isval(name, value):
-                ret[name] = serializer.serialize(value, fieldspec[name], dumpval,
-                                                 **kwargs)
+                ret[name] = serializer.raw_serialize(value, fieldspec[name], context)
     return ret
 
