@@ -249,6 +249,40 @@ class TestRestrict(TestCase):
         self.assertNotIn('field1', restricted)
         self.assertNotIn('field3', restricted)
 
+    def test_restrict_all(self):
+        spec = Fieldspec('*')
+        other = Fieldspec('field2,field3')
+        restricted = Fieldspec(spec).restrict(other)
+
+        self.assertIn('field2', restricted)
+        self.assertIn('field3', restricted)
+        self.assertNotIn('field1', restricted)
+
+    def test_restrict_all2(self):
+        spec = Fieldspec('*,-field1')
+        other = Fieldspec('*,-field4')
+        restricted = Fieldspec(spec).restrict(other)
+
+        self.assertIn('field2', restricted)
+        self.assertIn('field3', restricted)
+        self.assertNotIn('field1', restricted)
+        self.assertNotIn('field4', restricted)
+        self.assertTrue(restricted.all)
+
+    def test_regression_1(self):
+        spec = Fieldspec('*,phone_numbers(number)')
+        other = Fieldspec('type,phone_numbers(active,mobile,number)')
+        restricted = Fieldspec(spec)
+        restricted.restrict(other)
+
+        self.assertIn('type', restricted)
+        self.assertNotIn('foo', restricted)
+
+        subspec = restricted['phone_numbers']
+        self.assertIn('number', subspec)
+        self.assertNotIn('active', subspec)
+        self.assertNotIn('mobile', subspec)
+
 
 class TestRestrictWithConflicts(TestCase):
     def test_fieldspec_and_field(self):

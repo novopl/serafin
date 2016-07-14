@@ -96,6 +96,7 @@ class Fieldspec(object):
         if isinstance(spec, Fieldspec):
             # Clone
             self.fields = deepcopy(spec.fields)
+            self.exclude = deepcopy(spec.exclude)
             self.all = spec.all
             self.spec = spec.spec
 
@@ -250,8 +251,14 @@ class Fieldspec(object):
         """ Restrict the current fieldspec by another one. The result should be
         the intersection of both.
         """
+        common = frozenset()
+        was_all = self.all
         if fieldspec.all:
             common = frozenset(self.fields.keys())
+        elif self.all:
+            self.all = False
+            #self.fields = OrderedDict(fieldspec.fields)
+            common = frozenset(self.fields.keys()) | frozenset(fieldspec.fields.keys())
         else:
             common = frozenset(self.fields.keys()) & frozenset(fieldspec.fields.keys())
 
@@ -259,7 +266,13 @@ class Fieldspec(object):
 
         newfields = []
         for name in common:
-            mymembers = self.fields[name]
+            try:
+                mymembers = self.fields[name]
+            except KeyError:
+                if was_all:
+                    newfields.append((name, fieldspec.fields[name]))
+                continue
+
             try:
                 members = fieldspec.fields[name]
                 if mymembers != members:
