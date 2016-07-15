@@ -21,8 +21,10 @@ output to be formatted.
 """
 from .base import Priority, serializer, serialize
 from .core_serializers import *
+from .fieldspec import Fieldspec
 __all__ = [
     'Priority',
     'serializer',
-    'serialize'
+    'serialize',
+    'Fieldspec',
 ]

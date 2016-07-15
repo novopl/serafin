@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from logging import getLogger
 from collections import OrderedDict
 from datetime import date as Date, datetime as Datetime
 from igor.enum import Enum
@@ -7,6 +8,7 @@ from igor.traits import iterable, isfileobj
 from igor.js import jsobj
 from six import iteritems, string_types
 from .fieldspec import Fieldspec
+L = getLogger(__name__)
 
 
 class Priority(Enum):
@@ -43,35 +45,35 @@ class Serializer(object):
     HIGH priority is for serializers with a strict selector.
 
     >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, Model))
-    ... def serialize_model(model, fieldspec, dumpval, kwargs):
+    ... def serialize_model(model, fieldspec, context):
     ...     pass
 
     >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, dict))
-    ... def serialize_dict(model, fieldspec, dumpval, kwargs):
+    ... def serialize_dict(model, fieldspec, context):
     ...     pass
 
     >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, jsobj))
-    ... def serialize_jsobj(model, fieldspec, dumpval, kwargs):
+    ... def serialize_jsobj(model, fieldspec, context):
     ...     pass
 
     >>> @serializer.fuzzy(Priority.HIGH,
     ...     lambda o: isinstance(o, (int, float, str, unicode, bytes))
     ... )
-    ... def serialize_primitive(model, fieldspec, dumpval, kwargs):
+    ... def serialize_primitive(model, fieldspec, context):
     ...     pass
 
     MEDIUM priority since this will catch every iterable, and we might want
     a more custom serializer.
 
     >>> @serializer.fuzzy(Priority.MEDIUM, lambda o: iterable(o))
-    ... def serialize_iterable(model, fieldspec, dumpval, kwargs):
+    ... def serialize_iterable(model, fieldspec, context):
     ...     pass
 
     Low because it will catch almost everything. This is a kind of general
     fallback if we don't have specialized serializer.
 
     >>> @serializer.fuzzy(Priority.LOW, lambda o: isinstance(o, object))
-    ... def serialize_object(model, fieldspec, dumpval, kwargs):
+    ... def serialize_object(model, fieldspec, context):
     ...     pass
     """
 
@@ -81,18 +83,21 @@ class Serializer(object):
 
     def strict(self, cls):
         def decorator(fn):
+            if cls in self.classmap:
+                L.warning("Strict serializer already registered for class {}".format(
+                    cls.__name__
+                ))
             self.classmap[cls] = fn
             return fn
         return decorator
 
     def fuzzy(self, priority, check):
+        """
+        >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, Model))
+        ... def serialize_model(model, fieldspec, context):
+        ...     # ...
+        """
         def decorator(fn):
-            """
-            >>> ismodel = lambda o: isinstance(o, Model)
-            >>> @serializer.fuzzy.fuzzy(Priority.HIGH, ismodel)
-            ... def serialize_model(model, fieldspec, dumpval, kwargs):
-            ...     # ...
-            """
             fn._serializer_priority  = priority
             fn._serializer_check     = check
             if priority not in self.serializers:
@@ -104,13 +109,44 @@ class Serializer(object):
         return decorator
 
     def raw_serialize(self, obj, fieldspec, context):
-        serializer = self.find(obj)
+        # Find serializer (inlined for performance reasons
+        if obj is None:
+            return None
+
+        # Check if we have a direct serializer for the class
+        try:
+            serializer = self.classmap[obj.__class__]
+        except KeyError:
+            # Hacky speedups
+            if isinstance(obj, dict):
+                serializer = serialize_dict
+            elif isinstance(obj, PRIMITIVES):
+                serializer = serialize_primitive
+            elif isfileobj(obj):
+                serializer = serialize_file_handle
+            elif iterable(obj):
+                serializer = serialize_iterable
+            elif hasattr(obj, 'serialize') and hasattr(obj.serialize, '__call__'):
+                serializer = serialize_serializable
+            else:
+                # Look if we have direct serializer for a base class of obj
+                for c, fn in iteritems(self.classmap):
+                    if isinstance(obj, c):
+                        serializer = fn
+                        break
+                else:
+                    # As a last resort user the fuzzy search
+                    minpriority = context.get('minpriority', Priority.LOW)
+                    serializer = self.fuzzy_find(minpriority)
+
+        # Do the actual serialization
         try:
             out = serializer(obj, fieldspec, context)
         except Exception as ex:
             out = "({}: {})".format(ex.__class__.__name__, str(ex))
             if context.reraise:
                 raise
+
         return out
 
     def serialize(self, obj, fieldspec='*', **kwargs):
@@ -127,19 +163,19 @@ class Serializer(object):
 
         return self.raw_serialize(obj, fieldspec, context)
 
-    def find_by_priority(self, obj, minpriority=Priority.LOW):
+    def fuzzy_find(self, obj, minpriority=Priority.LOW):
         """ Find serializer for the fiven object.
 
-        :param obj:
-            The object you want the serializer for.
+        Args:
+            obj:
+                The object you want the serializer for.
 
-        :param minpriority:
-            The minimum priority of the serializer. Serializers with lower priority
-            won't be returned. This allows to exclude fallback serializers from the
-            search.
-        :type minpriority: Priority
+            minpriority (int):
+                The minimum priority of the serializer. Serializers with lower priority
+                won't be returned. This allows to exclude fallback serializers from the
+                search.
 
-        :returns:
+        Returns:
             Serializer function if found or ``None``.
         """
         serializer = None
@@ -157,36 +193,6 @@ class Serializer(object):
                 str(type(obj))
             ))
         return serializer
-
-    def find(self, obj, minpriority=Priority.LOW):
-        if obj is None:
-            return None
-
-        cls = obj.__class__
-        # Check if we have a direct serializer for the class
-        serializer = self.classmap.get(cls)
-        if serializer is not None:
-            return serializer
-
-        # Hacky speedups
-        if isinstance(obj, dict):
-            return serialize_dict
-        if isinstance(obj, PRIMITIVES):
-            return serialize_primitive
-        if isfileobj(obj):
-            return serialize_file_handle
-        if iterable(obj):
-            return serialize_iterable
-        if hasattr(obj, 'serialize') and hasattr(obj.serialize, '__call__'):
-            return serialize_serializable
-
-        # Look if we have direct serializer for a base class of obj
-        for c, serializer in iteritems(self.classmap):
-            if isinstance(obj, c):
-                return serializer
-
-        return self.find_by_priority(minpriority)
-
 
 
 serializer = Serializer()
