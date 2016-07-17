@@ -66,12 +66,12 @@ def serialize_file_handle(obj, fieldspec, context):
     lambda o: hasattr(o, 'serialize') and hasattr(o.serialize, '__call__')
 )
 def serialize_serializable(obj, fieldspec, context):
-    return obj.serialize(fieldspec, context)
+    return obj.serialize()
 
 
 @serializer.fuzzy(Priority.LOW, lambda o: isinstance(o, object))
 def serialize_object(obj, fieldspec, context):
-    if fieldspec.empty():
+    if fieldspec is True or fieldspec.empty():
         return {}
 
     filters = [

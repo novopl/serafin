@@ -137,7 +137,7 @@ class Serializer(object):
                 else:
                     # As a last resort user the fuzzy search
                     minpriority = context.get('minpriority', Priority.LOW)
-                    serializer = self.fuzzy_find(minpriority)
+                    serializer = self.fuzzy_find(obj, minpriority)
 
         # Do the actual serialization
         try:
