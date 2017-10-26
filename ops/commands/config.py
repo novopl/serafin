@@ -16,6 +16,7 @@ SRC_DIR = repo_path('src')
 SRC_PATH = repo_path('src/serafin')
 BUILD_DIR = repo_path('.build')
 PKGS_PATHS = [
+    SRC_PATH,
     repo_path('ops/commands'),
 ]
 TEST_TYPES = {
