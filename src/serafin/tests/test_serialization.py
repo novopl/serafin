@@ -1,11 +1,16 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+# pylint: disable=missing-docstring
+from __future__ import absolute_import, unicode_literals
+
+# stdlib imports
 import unittest
-import json
 from functools import partial
-from igor.serialize import serialize
-from igor.serialize import serializer
-from igor.js import jsobj
+
+# 3rd party imports
+from jsobj import jsobj
+
+# local imports
+from .. import serialize, serializer
 
 
 class CustomClass(jsobj):
@@ -71,6 +76,7 @@ class TestSerialize(unittest.TestCase):
         })
 
     def test_context_is_being_passed(self):
+        # pylint: disable=unused-variable
         @serializer.strict(CustomClass)
         def custom_serialize(obj, fieldspec, context):
             context.called()

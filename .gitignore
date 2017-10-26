@@ -32,9 +32,13 @@ __pycache__
 # Generated files #
 ###################
 env
+.build
+.tox
 frontend/dist
 frontend/node_modules
-docs/html/
+/docs/html/
+/docs/ref
+
 
 ##############
 # Data files #
