@@ -9,8 +9,8 @@ from __future__ import absolute_import, unicode_literals
 import os
 
 # local imports
-from . import config as conf
-from .common import _rm_glob
+from .common import conf
+from .common import fs
 
 
 CLEAN_PATTERNS = conf.get('CLEAN_PATTERNS', [
@@ -24,9 +24,9 @@ def clean():
     """ Remove temporary files like python cache, swap files, etc. """
     cwd = os.getcwd()
 
-    os.chdir(conf.repo_path('.'))
+    os.chdir(conf.proj_path('.'))
 
     for pattern in CLEAN_PATTERNS:
-        _rm_glob(pattern)
+        fs.rm_glob(pattern)
 
     os.chdir(cwd)

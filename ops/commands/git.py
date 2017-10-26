@@ -5,13 +5,15 @@ git helpers.
 from __future__ import absolute_import, unicode_literals
 
 # stdlib imports
-from os import chmod
+import os
 
 # 3rd party imports
 from fabric.api import local
 
 # local imports
-from .common import _is_true, _repo_path, _sysmsg, _errmsg, _current_branch
+from .common import conf
+from .common import git
+from .common import log
 
 
 def addgithooks():
@@ -20,8 +22,8 @@ def addgithooks():
     This will run all the checks before pushing to avoid waiting for the CI
     fail.
     """
-    _sysmsg("Adding pre-commit hook")
-    with open(_repo_path('.git/hooks/pre-commit'), 'w') as fp:
+    log.info("Adding pre-commit hook")
+    with open(conf.proj_path('.git/hooks/pre-commit'), 'w') as fp:
         fp.write('\n'.join([
             '#!/bin/bash',
             'PATH="/opt/local/libexec/gnubin:$PATH"',
@@ -36,8 +38,8 @@ def addgithooks():
             'fab lint',
         ]))
 
-    _sysmsg("Adding pre-push hook")
-    with open(_repo_path('.git/hooks/pre-push'), 'w') as fp:
+    log.info("Adding pre-push hook")
+    with open(conf.proj_path('.git/hooks/pre-push'), 'w') as fp:
         fp.write('\n'.join([
             '#!/bin/bash',
             'PATH="/opt/local/libexec/gnubin:$PATH"',
@@ -52,13 +54,13 @@ def addgithooks():
             'fab test',
         ]))
 
-    _sysmsg("Making pre-push hook executable")
-    chmod(_repo_path('.git/hooks/pre-push'), 0o755)
+    log.info("Making pre-push hook executable")
+    os.chmod(conf.proj_path('.git/hooks/pre-push'), 0o755)
 
 
 def push():
     """ Push the current branch and set to track remote. """
-    branch = _current_branch()
+    branch = git.current_branch()
     local('git push -u origin {}'.format(branch))
 
 
@@ -68,24 +70,24 @@ def merged(release='no'):
     This is to ease the repetitive cleanup of each merged branch.
     """
     target_branch = 'master' if _is_true(release) else 'develop'
-    branch = _current_branch()
+    branch = git.current_branch()
 
     try:
         local('git rev-parse --verify {}'.format(branch))
     except:
-        _errmsg("Branch '{}' does not exist".format(branch))
+        log.err("Branch '{}' does not exist".format(branch))
 
-    _sysmsg("Checking out ^33{}".format(target_branch))
+    log.info("Checking out ^33{}".format(target_branch))
     local('git checkout {}'.format(target_branch))
 
-    _sysmsg("Pulling latest changes")
+    log.info("Pulling latest changes")
     local('git pull origin {}'.format(target_branch))
 
-    _sysmsg("Deleting branch ^33{}".format(branch))
+    log.info("Deleting branch ^33{}".format(branch))
     local('git branch -d {}'.format(branch))
 
-    _sysmsg("Pruning")
+    log.info("Pruning")
     local('git fetch --prune origin')
 
-    _sysmsg("Going back to ^33develop^32 branch")
+    log.info("Going back to ^33develop^32 branch")
     local('git checkout develop')

@@ -5,25 +5,26 @@ Testing commands
 from __future__ import absolute_import, unicode_literals
 
 # stdlib imports
-from os.path import join
+import os.path
 
 # 3rd party imports
 from fabric.api import local, shell_env
 
 # local imports
-from . import config as conf
-from .common import _is_true, _surround_paths_with_quotes
+from .common import conf
+from .common import fs
 
 
-BUILD_DIR = conf.get('BUILD_DIR', conf.repo_path('.build'))
+SRC_DIR = conf.get_path('SRC_DIR')
+SRC_PATH = conf.get_path('SRC_PATH')
 
-DEFAULT_PYTEST_CFG = conf.repo_path('ops/tools/pytest.ini')
-PYTEST_CFG_PATH = conf.get('PYTEST_CFG_PATH', DEFAULT_PYTEST_CFG)
+BUILD_DIR = conf.get_path('BUILD_DIR', '.build')
+
+PYTEST_CFG_PATH = conf.get_path('PYTEST_CFG_PATH', 'ops/tools/pytest.ini')
 TEST_TYPES = conf.get('TEST_TYPES', {})
 
-DEFAULT_COVERAGE_CFG = conf.repo_path('ops/tools/coverage.ini')
-COVERAGE_OUT_PATH = join(BUILD_DIR, 'coverage')
-COVERAGE_CFG_PATH = conf.get('COVERAGE_CFG_PATH', DEFAULT_PYTEST_CFG)
+COVERAGE_OUT_PATH = os.path.join(BUILD_DIR, 'coverage')
+COVERAGE_CFG_PATH = conf.get_path('COVERAGE_CFG_PATH', 'ops/tools/coverage.ini')
 
 DJANGO_SETTINGS = conf.get('DJANGO_SETTINGS', None)
 DJANGO_TEST_SETTINGS = conf.get('DJANGO_TEST_SETTINGS', None)
@@ -32,18 +33,18 @@ DJANGO_TEST_SETTINGS = conf.get('DJANGO_TEST_SETTINGS', None)
 def test(**opts):
     """ Run all tests against the current python version. """
     args = []
-    sugar = _is_true(opts.get('sugar', 'on'))
-    junit = _is_true(opts.get('junit', 'off'))
+    sugar = conf.is_true(opts.get('sugar', 'on'))
+    junit = conf.is_true(opts.get('junit', 'off'))
     test_type = opts.get('type', 'default')
     verbose = int(opts.get('verbose', '0'))
-    show_locals = _is_true(opts.get('locals', 'on'))
-    coverage = _is_true(opts.get('coverage', 'on'))
+    show_locals = conf.is_true(opts.get('locals', 'on'))
+    coverage = conf.is_true(opts.get('coverage', 'on'))
 
     if coverage:
         args += [
             '--durations=3',
             '--cov-config={}'.format(COVERAGE_CFG_PATH),
-            '--cov={}'.format(conf.SRC_PATH),
+            '--cov={}'.format(SRC_PATH),
             '--cov-report=term:skip-covered',
             '--cov-report=html:{}'.format(COVERAGE_OUT_PATH),
         ]
@@ -67,7 +68,7 @@ def test(**opts):
     if show_locals:
         args += ['-l']
 
-    test_config = {'paths': conf.SRC_PATH}
+    test_config = {'paths': SRC_PATH}
     if test_type is not None:
         test_config = TEST_TYPES.get(test_type)
         mark = test_config.get('mark')
@@ -75,10 +76,11 @@ def test(**opts):
         if mark:
             args += ['-m "{}"'.format(mark)]
 
-    with shell_env(PYTHONPATH=conf.SRC_DIR):
+    with shell_env(PYTHONPATH=SRC_DIR):
         test_paths = test_config['paths'] or []
+        test_paths = [conf.proj_path(p) for p in test_paths]
         local('pytest -c {conf} {args} {paths}'.format(
             conf=PYTEST_CFG_PATH,
             args=' '.join(args),
-            paths=_surround_paths_with_quotes(test_paths)
+            paths = fs.surround_paths_with_quotes(test_paths)
         ))
