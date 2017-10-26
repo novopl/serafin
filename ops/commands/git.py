@@ -69,7 +69,7 @@ def merged(release='no'):
 
     This is to ease the repetitive cleanup of each merged branch.
     """
-    target_branch = 'master' if _is_true(release) else 'develop'
+    target_branch = 'master' if conf.is_true(release) else 'develop'
     branch = git.current_branch()
 
     try:
