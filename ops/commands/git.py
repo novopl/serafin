@@ -20,13 +20,36 @@ def addgithooks():
     This will run all the checks before pushing to avoid waiting for the CI
     fail.
     """
+    _sysmsg("Adding pre-commit hook")
+    with open(_repo_path('.git/hooks/pre-commit'), 'w') as fp:
+        fp.write('\n'.join([
+            '#!/bin/bash',
+            'PATH="/opt/local/libexec/gnubin:$PATH"',
+            (
+                'REPO_PATH=$(dirname "$(dirname "$(dirname '
+                '"$(readlink - fm "$0")")")")'
+            ),
+            '',
+            'echo "REPO_PATH=$REPO_PATH"',
+            'source "$REPO_PATH/env/bin/activate"',
+            '',
+            'fab lint',
+        ]))
+
     _sysmsg("Adding pre-push hook")
     with open(_repo_path('.git/hooks/pre-push'), 'w') as fp:
         fp.write('\n'.join([
             '#!/bin/bash',
-            'source ./env/bin/activate',
-            'fab check',
-            'fab fe_check'
+            'PATH="/opt/local/libexec/gnubin:$PATH"',
+            (
+                'REPO_PATH=$(dirname "$(dirname "$(dirname '
+                '"$(readlink - fm "$0")")")")'
+            ),
+            '',
+            'echo "REPO_PATH=$REPO_PATH"',
+            'source "$REPO_PATH/env/bin/activate"',
+            '',
+            'fab test',
         ]))
 
     _sysmsg("Making pre-push hook executable")
