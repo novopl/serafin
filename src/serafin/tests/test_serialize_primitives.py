@@ -10,7 +10,7 @@ from datetime import datetime
 from jsobj import jsobj
 
 # local imports
-from ..base import dump_val
+from ..core import dump_val
 from ..core_serializers import serialize_primitive
 from ..fieldspec import Fieldspec
 
