@@ -32,6 +32,7 @@ __pycache__
 # Generated files #
 ###################
 env
+.build
 frontend/dist
 frontend/node_modules
 docs/html/

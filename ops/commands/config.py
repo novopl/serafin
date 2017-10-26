@@ -13,13 +13,13 @@ def repo_path(path):
 
 # general
 SRC_DIR = repo_path('src')
-SRC_PATH = repo_path('src/simplechat')
+SRC_PATH = repo_path('src/serafin')
 BUILD_DIR = repo_path('.build')
 PKGS_PATHS = [
     repo_path('ops/commands'),
 ]
 TEST_TYPES = {
-    'default': {'paths': PKGS_PATHS}
+    'default': {'paths': [SRC_PATH]}
 }
 
 

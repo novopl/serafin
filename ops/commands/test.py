@@ -70,7 +70,10 @@ def test(**opts):
     test_config = {'paths': conf.SRC_PATH}
     if test_type is not None:
         test_config = TEST_TYPES.get(test_type)
-        args += ['-m "{}"'.format(test_config['mark'])]
+        mark = test_config.get('mark')
+
+        if mark:
+            args += ['-m "{}"'.format(mark)]
 
     with shell_env(PYTHONPATH=conf.SRC_DIR):
         test_paths = test_config['paths'] or []
