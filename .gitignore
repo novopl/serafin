@@ -33,6 +33,7 @@ __pycache__
 ###################
 env
 .build
+.tox
 frontend/dist
 frontend/node_modules
 /docs/html/
