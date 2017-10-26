@@ -168,11 +168,12 @@ class Serializer(object):
                 serializer = serialize_file_handle
             elif iterable(obj):
                 serializer = serialize_iterable
-            elif (
-                hasattr(obj, 'serialize') and
-                hasattr(obj.serialize, '__call__')
-            ):
+            elif callable(getattr(obj, 'serafin_serialize')):
                 serializer = serialize_serializable
+            elif callable(getattr(obj, 'as_dict')):
+                serializer = ThirdPartySerializer('as_dict')
+            elif callable(getattr(obj, 'to_dict')):
+                serializer = ThirdPartySerializer('as_dict')
             else:
                 # Look if we have direct serializer for a base class of obj
                 for c, fn in iteritems(self.classmap):
@@ -287,11 +288,12 @@ def serialize(obj, fieldspec=None, **context):
 
 
 from .core_serializers import (     # noqa
+    PRIMITIVES,
     serialize_dict,
     serialize_file_handle,
     serialize_iterable,
     serialize_object,
     serialize_primitive,
     serialize_serializable,
-    PRIMITIVES,
+    ThirdPartySerializer,
 )

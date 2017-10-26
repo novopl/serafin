@@ -72,7 +72,26 @@ def serialize_file_handle(obj, fieldspec, context):
 
 def serialize_serializable(obj, fieldspec, context):
     """ Serialize any class that defines a ``serialize`` method. """
-    return obj.serialize()
+    return obj.serialize(fieldspec, context)
+
+
+class ThirdPartySerializer(object):
+    """ A serializer for integrating with 3rd party solutions.
+
+    This will use a given method on the object to return the dict and then
+    use `serialize_dict` to filter the results according to the specification.
+
+    This will be slower than implementing a direct `serafin_serialize()` method
+    but will work with things like AppEngine ndb models ``to_dict()`` method out
+    of the box.
+    """
+    def __init__(self, method_name):
+        self.method_name = method_name
+
+    def __call__(self, obj, fieldspec, context):
+        method = getattr(obj, self.method_name)
+        data = method()
+        return serialize_dict(data, fieldspec, context)
 
 
 def serialize_object(obj, fieldspec, context):
