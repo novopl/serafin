@@ -44,7 +44,7 @@ def merged(release='no'):
 
     This is to ease the repetitive cleanup of each merged branch.
     """
-    target_branch = 'release' if _is_true(release) else 'develop'
+    target_branch = 'master' if _is_true(release) else 'develop'
     branch = _current_branch()
 
     try:
