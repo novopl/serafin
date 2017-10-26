@@ -10,15 +10,15 @@ from __future__ import absolute_import, unicode_literals
 # stdlib imports
 import sys
 import os
-from os.path import join, exists
+import os.path
 
 # local imports
-from .common import _cprint
+from .common import log
 
 
 def _is_appengine_sdk(path):
     """ Return True if the given *path* contains AppEngine SDK. """
-    return all(exists(join(path, f)) for f in (
+    return all(os.path.exists(os.path.join(path, f)) for f in (
         'appcfg.py',
         'dev_appserver.py',
         'google',
@@ -40,7 +40,7 @@ def _find_appengine_sdk():
             ' directly.',
             '^0'
         )
-        _cprint('\n'.join(msg_lines))
+        log.cprint('\n'.join(msg_lines))
         sys.exit(1)
 
     return sdk_path

@@ -5,33 +5,41 @@ Helper commands for releasing to pypi.
 from __future__ import absolute_import, unicode_literals
 from fabric.api import local
 
-from . import config as conf
-from .common import _bump_version_file
-from .common import _get_current_version
-from .common import _inside_repo
-from .common import _sysmsg
+from .common import conf
+from .common import log
+from .common import project
+from .common import version as ver
 
 
-VERSION_FILE = conf.get('VERSION_FILE', conf.repo_path('VERSION'))
+VERSION_FILE = conf.get_path('VERSION_FILE', 'VERSION')
 
 
 def version():
     """ Return current project version. """
-    ver = _get_current_version(VERSION_FILE)
+    current = ver.get_current(VERSION_FILE)
 
-    _sysmsg("Version: ^35{}".format(ver))
+    log.info("Version: ^35{}".format(current))
 
 
-def bump_version(component='patch'):
+def bump_version(component='patch', exact=None):
     """ Bump current project version without committing anything.
 
     No tags are created either.
     """
-    _sysmsg("Bumping package version")
-    old_ver, new_ver = _bump_version_file(VERSION_FILE, component)
+    log.info("Bumping package version")
 
-    _sysmsg("  old version: ^35{}".format(old_ver))
-    _sysmsg("  new version: ^35{}".format(new_ver))
+    old_ver = ver.get_current(VERSION_FILE)
+    log.info("  old version: ^35{}".format(old_ver))
+
+    if ver.is_valid(exact):
+        new_ver = exact
+    else:
+        new_ver = ver.bump(old_ver, component)
+
+    with open(VERSION_FILE, 'w') as fp:
+        fp.write(new_ver)
+
+    log.info("  new version: ^35{}".format(new_ver))
 
 
 def make_release(component='patch'):
@@ -40,35 +48,39 @@ def make_release(component='patch'):
     This will bump the version number (patch component by default) + add and tag
     a commit with that change. Finally it will upload the package to pypi.
     """
-    with _inside_repo(quiet=True):
+    with project.inside(quiet=True):
         git_status = local('git status --porcelain', capture=True).strip()
         has_changes = len(git_status) > 0
 
     if has_changes:
-        _sysmsg("Cannot release: there are uncommitted changes")
+        log.info("Cannot release: there are uncommitted changes")
         exit(1)
 
-    _sysmsg("Bumping package version")
-    old_ver, new_ver = _bump_version_file(VERSION_FILE, component)
+    log.info("Bumping package version")
+    old_ver = ver.get_current(VERSION_FILE)
+    new_ver = ver.bump(old_ver, component)
 
-    _sysmsg("  old version: ^35{}".format(old_ver))
-    _sysmsg("  new version: ^35{}".format(new_ver))
+    with open(VERSION_FILE, 'w') as fp:
+        fp.write(new_ver)
 
-    with _inside_repo(quiet=True):
-        _sysmsg("Creating commit for the release")
+    log.info("  old version: ^35{}".format(old_ver))
+    log.info("  new version: ^35{}".format(new_ver))
+
+    with project.inside(quiet=True):
+        log.info("Creating commit for the release")
         local('git add {ver_file} && git commit -m "Release: v{ver}"'.format(
             ver_file=VERSION_FILE,
             ver=new_ver
         ))
 
-        _sysmsg("Creating tag that marks the release")
+        log.info("Creating tag that marks the release")
         local('git tag -a "v{0}" -m "Mark v{0} release"'.format(new_ver))
 
 
 def upload(target='local'):
     """ Release to a given pypi server ('local' by default). """
-    _sysmsg("Uploading to pypi server ^33{}".format(target))
-    with _inside_repo(quiet=False):
+    log.info("Uploading to pypi server ^33{}".format(target))
+    with project.inside(quiet=False):
         local('python setup.py sdist register -r "{}"'.format(target))
         local('python setup.py sdist upload -r "{}"'.format(target))
 
