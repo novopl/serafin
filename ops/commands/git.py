@@ -25,7 +25,10 @@ def addgithooks():
         fp.write('\n'.join([
             '#!/bin/bash',
             'PATH="/opt/local/libexec/gnubin:$PATH"',
-            'REPO_PATH=$(dirname $(dirname $(dirname $(readlink - fm "$0"))))',
+            (
+                'REPO_PATH=$(dirname "$(dirname "$(dirname '
+                '"$(readlink - fm "$0")")")")'
+            ),
             '',
             'echo "REPO_PATH=$REPO_PATH"',
             'source "$REPO_PATH/env/bin/activate"',
@@ -38,7 +41,10 @@ def addgithooks():
         fp.write('\n'.join([
             '#!/bin/bash',
             'PATH="/opt/local/libexec/gnubin:$PATH"',
-            'REPO_PATH=$(dirname $(dirname $(dirname $(readlink - fm "$0"))))',
+            (
+                'REPO_PATH=$(dirname "$(dirname "$(dirname '
+                '"$(readlink - fm "$0")")")")'
+            ),
             '',
             'echo "REPO_PATH=$REPO_PATH"',
             'source "$REPO_PATH/env/bin/activate"',
