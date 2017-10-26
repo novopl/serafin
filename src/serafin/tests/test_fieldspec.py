@@ -1,6 +1,12 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# pylint: disable=missing-docstring,unsubscriptable-object
+from __future__ import absolute_import, unicode_literals
+
+# stdlib imports
 from unittest import TestCase
-from igor.serialize.fieldspec import Fieldspec
+
+# local imports
+from ..fieldspec import Fieldspec
 
 
 class FieldspecTest(TestCase):

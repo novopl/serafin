@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def read(fname):
@@ -7,19 +7,18 @@ def read(fname):
 
 
 setup(
-    name="igor-serialize",
+    name="serafin",
     version=read('VERSION').strip(),
     author="Mateusz 'novo' Klos",
     author_email="novopl@gmail.com",
     license="MIT",
-    keywords="igor-serialize serialize serialization json config",
-    url="http://github.com/novopl/igor-urlconf",
-    description="Standalone URL dispatcher implementation",
-    packages=[
-        'igor.serialize',
-    ],
+    keywords="serafin serialize serialization json config",
+    url="http://github.com/novopl/serafin",
+    description="Python library that implementing selective serialization",
+    long_description=read('README.rst'),
+    packages=find_packages('src'),
     install_requires=[
-        'igor-core',
+        l.strip() for l in read('requirements.txt').split() if '==' in l
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

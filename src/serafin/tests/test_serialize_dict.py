@@ -1,15 +1,22 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import
+# pylint: disable=missing-docstring
+from __future__ import absolute_import, unicode_literals
+
+# stdlib imports
 from unittest import TestCase
-from igor.js import jsobj
-from igor.serialize.base import dumpval
-from igor.serialize.fieldspec import Fieldspec
-from igor.serialize.core_serializers import serialize_dict
+
+# 3rd party imports
+from jsobj import jsobj
+
+# local imports
+from ..base import dump_val
+from ..core_serializers import serialize_dict
+from ..fieldspec import Fieldspec
 
 
 class TestSerializeDict(TestCase):
     def test_only_primitives_inside_one_level_deep(self):
-        input = {
+        data = {
             'field1':  123,
             'field2':  "string",
             'field3':  123.321,
@@ -18,9 +25,9 @@ class TestSerializeDict(TestCase):
                 'field2': 'sub val'
             }
         }
-        ctx = jsobj(dumpval=dumpval)
-        output = serialize_dict(input, Fieldspec('*'), ctx)
-        self.assertDictEqual(output, {
+        ctx = jsobj(dumpval=dump_val)
+        result = serialize_dict(data, Fieldspec('*'), ctx)
+        self.assertDictEqual(result, {
             'field1':  123,
             'field2':  "string",
             'field3':  123.321,
@@ -28,7 +35,6 @@ class TestSerializeDict(TestCase):
         })
 
     def test_converts_string_to_Fieldspec(self):
-        ctx = jsobj(dumpval=dumpval)
+        ctx = jsobj(dumpval=dump_val)
         output = serialize_dict({'test': 123}, Fieldspec('*'), ctx)
         self.assertDictEqual(output, {'test': 123})
-

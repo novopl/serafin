@@ -1,13 +1,29 @@
 # -*- coding: utf-8 -*-
+""" Serialization fieldspec implementation.
+
+This is what makes the serialization so flexible as it allows to cherry-pick
+what is actually serialized. This module just implements the serialization field
+specification itself and the rest of the system uses it to define/decide what
+is being included in the resulting data.
+
+This module **has** to be really well tested as everything else depends on it
+and the implementation itself is a bit tricky.
+"""
+from __future__ import absolute_import, unicode_literals
+
+# stdlib imports
 import sys
 import re
-from six import string_types, iteritems
 from copy import deepcopy
 from collections import OrderedDict
 if sys.version_info >= (3, 0):
     from urllib.parse import parse_qsl
 else:
     from urlparse import parse_qsl
+
+# 3rd party imports
+from six import string_types, iteritems     # noqa
+
 
 kFieldPtrn = re.compile(r'{name}(\({members}\))?'.format(
     name=r'(?P<name>-?[\w\d_*]+)',
@@ -64,23 +80,26 @@ class Fieldspec(object):
 
     **Implementation**
 
-    Fieldspec has 2 main variables that hold the spec. The ``fields`` and ``exclude``.
-    Exclude is much simplier, because it's just a list of strings with field names
-    that should be excluded at this level.
+    Fieldspec has 2 main variables that hold the spec. The ``fields`` and
+    ``exclude``. Exclude is much simpler, because it's just a list of strings
+    with field names that should be excluded at this level.
 
-    The ``fields`` member is a list of tuples ``(name, members)`` where name is the
-    fields name and members is the optional member spec **members** can be one of:
+    The ``fields`` member is a list of tuples ``(name, members)`` where name
+    is the fields name and members is the optional member spec **members** can
+    be one of:
         - None
-        - ``True`` if the subfield spec is just the field name, ie `field`.
-        - ``Fieldspec`` if the subfield has a fieldspec defined, ie `field(sub1,sub2).
+        - ``True`` if the subfield spec is just the field name, ie ``field``.
+        - ``Fieldspec`` if the subfield has a fieldspec defined, ie
+         ``field(sub1,sub2)``.
 
-    If the fieldspec contains ``*`` it means at that level all fields are included by
-    default. You can still exclude them using ``-`` but by default all fields within
-    an object are included.
+    If the fieldspec contains ``*`` it means at that level all fields are
+    included by default. You can still exclude them using ``-`` but by default
+    all fields within an object are included.
 
-    The special fieldspec `**` can be used and it means the same thing as ``*`` but
-    is applied recursively to all objects. **Be very careful with using it as it will
-    try to serialize EVERYTHING and in many cases you will run into problems.
+    The special fieldspec `**` can be used and it means the same thing as ``*``
+    but is applied recursively to all objects. **Be very careful with using it
+    as it will try to serialize EVERYTHING and in many cases you will run into
+    problems.
 
     TODO:
         - Ability to specify max depth.
@@ -107,6 +126,12 @@ class Fieldspec(object):
             raise ValueError('Invalid field specification')
 
     def empty(self):
+        """ Return **True** if the current spec is empty.
+
+        :return bool:
+            **True** if nothing represented by this fieldspec should be
+            included as part of the serialization result.
+        """
         return len(self.fields) == 0 and not self.all
 
     def __contains__(self, name):
@@ -146,9 +171,9 @@ class Fieldspec(object):
         Args:
             string (str):   A string representation of the fieldspec.
 
-        The string is split on the high level by commas and then processed. The parser
-        will take into account the parenthesis and skip them when looking for comas.
-        The members are parsed recursively.
+        The string is split on the high level by commas and then processed.
+        The parser will take into account the parenthesis and skip them when
+        looking for comas. The members are parsed recursively.
         """
         fields  = self._splitfields(string)
         for field in fields:
@@ -208,7 +233,8 @@ class Fieldspec(object):
         the union of both.
 
         .. notes:: If the field is in both specs and it's values are different
-        there is a conflict. The conflict can be resolved by merging the sub specs.
+        there is a conflict. The conflict can be resolved by merging the sub
+        specs.
         """
         if isinstance(fieldspec, string_types):
             fieldspec = Fieldspec(fieldspec)
@@ -219,9 +245,12 @@ class Fieldspec(object):
         for name, members in iteritems(fieldspec.fields):
             try:
                 mymembers = self.fields[name]
-                # There already is a field like that, we need to sort out the conflict.
+                # There already is a field like that, we need to sort
+                # out the conflict.
                 if mymembers != members:
-                    self.fields[name] = self._resolve_conflict(mymembers, members)
+                    self.fields[name] = self._resolve_conflict(
+                        mymembers, members
+                    )
             except KeyError:
                 # this fieldspec doesn't have the key yet
                 self.fields[name] = members
@@ -251,16 +280,18 @@ class Fieldspec(object):
         """ Restrict the current fieldspec by another one. The result should be
         the intersection of both.
         """
-        common = frozenset()
         was_all = self.all
+        my_fields = frozenset(self.fields.keys())
+        other_fields = frozenset(fieldspec.fields.keys())
+
         if fieldspec.all:
-            common = frozenset(self.fields.keys())
+            common = my_fields
         elif self.all:
             self.all = False
-            #self.fields = OrderedDict(fieldspec.fields)
-            common = frozenset(self.fields.keys()) | frozenset(fieldspec.fields.keys())
+            # self.fields = OrderedDict(fieldspec.fields)
+            common = my_fields | other_fields
         else:
-            common = frozenset(self.fields.keys()) & frozenset(fieldspec.fields.keys())
+            common = my_fields & other_fields
 
         self.exclude.update(fieldspec.exclude)
 
@@ -299,6 +330,6 @@ class Fieldspec(object):
 
     @classmethod
     def from_query(self, qs):
+        """ Create a fieldspec from a HTTP request query string. """
         qs  = dict(parse_qsl(qs)) if isinstance(qs, string_types) else qs
         return Fieldspec(qs.get('_fields', '*'))
-

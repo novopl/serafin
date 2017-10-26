@@ -1,13 +1,23 @@
 # -*- coding: utf-8 -*-
+"""
+Contains the core serializer functionality.
+"""
 from __future__ import absolute_import
-from logging import getLogger
+
+# stdlib imports
 from collections import OrderedDict
 from datetime import date as Date, datetime as Datetime
-from igor.enum import Enum
-from igor.traits import iterable, isfileobj
-from igor.js import jsobj
+from logging import getLogger
+
+# 3rd party imports
+from jsobj import jsobj
 from six import iteritems, string_types
+
+# local imports
 from .fieldspec import Fieldspec
+from .util import Enum, iterable, isfile
+
+
 L = getLogger(__name__)
 
 
@@ -34,7 +44,8 @@ class Priority(Enum):
     LOW     = 0
 
 
-def dumpval(name, value):
+def dump_val(name, value):
+    """ The default implementation for object dump passed to jsobj. """
     if isinstance(value, (Date, Datetime)):
         return value.isoformat()
     return value
@@ -82,9 +93,13 @@ class Serializer(object):
         self.classmap = OrderedDict()
 
     def strict(self, cls):
-        def decorator(fn):
+        """ Decorator for serializers that match strictly by type.
+
+        Each type can have only one strict serializer associated with it.
+        """
+        def decorator(fn):      # pylint: disable=missing-docstring
             if cls in self.classmap:
-                L.warning("Strict serializer already registered for class {}".format(
+                L.warning("Strict serializer already registered for {}".format(
                     cls.__name__
                 ))
             self.classmap[cls] = fn
@@ -97,7 +112,7 @@ class Serializer(object):
         ... def serialize_model(model, fieldspec, context):
         ...     # ...
         """
-        def decorator(fn):
+        def decorator(fn):      # pylint: disable=missing-docstring
             fn._serializer_priority  = priority
             fn._serializer_check     = check
             if priority not in self.serializers:
@@ -108,7 +123,52 @@ class Serializer(object):
 
         return decorator
 
+    def serialize(self, obj, fieldspec='*', **kwargs):
+        """ Serialize the object according to the given fieldspec.
+
+        This is the method that should be used by the users of the lib.
+        Compared to `raw_serialize()` it will convert fieldspec to a
+        `Fieldspec` instance if necessary and build the serialization
+        context based on the extra keyword arguments passed.
+
+        :param Any obj:
+        :param Fieldspec|unicode|str fieldspec:
+        :param dict kwargs:
+        :return dict.:
+            Returns an object that can be directly dumped to JSON.
+        """
+        if isinstance(fieldspec, string_types):
+            fieldspec = Fieldspec(fieldspec)
+        elif fieldspec is None:
+            fieldspec = Fieldspec('*')
+
+        context = jsobj(
+            dumpval=dump_val,
+            reraise=True,
+        )
+        context.update(kwargs)
+
+        return self.raw_serialize(obj, fieldspec, context)
+
     def raw_serialize(self, obj, fieldspec, context):
+        """ Raw serialize without parsing the fieldspec.
+
+        This method should be used when writing new serializers for performance
+        reasons. When writing a new serializer you will already have a
+        serialization context passed to the serializer function and the
+        fieldspec will also already be passed as `Fieldspec` instance. Using
+        `raw_serializer` will remove the overhead of creating those at
+        each call level. The `serialize` method will create those when executed
+        by the user code and then pass them to the serializer function. That
+        function in turn might need to use other serializers defined elsewhere
+        but won't need the overhead of calling `serialize()` again.
+
+        :param Any obj:
+        :param Fieldspec fieldspec:
+        :param dict context:
+        :return dict|list|str|int:
+            Returns an object that can be directly dumped to JSON.
+        """
         # Find serializer (inlined for performance reasons
         if obj is None:
             return None
@@ -122,11 +182,14 @@ class Serializer(object):
                 serializer = serialize_dict
             elif isinstance(obj, PRIMITIVES):
                 serializer = serialize_primitive
-            elif isfileobj(obj):
+            elif isfile(obj):
                 serializer = serialize_file_handle
             elif iterable(obj):
                 serializer = serialize_iterable
-            elif hasattr(obj, 'serialize') and hasattr(obj.serialize, '__call__'):
+            elif (
+                hasattr(obj, 'serialize') and
+                hasattr(obj.serialize, '__call__')
+            ):
                 serializer = serialize_serializable
             else:
                 # Look if we have direct serializer for a base class of obj
@@ -149,20 +212,6 @@ class Serializer(object):
 
         return out
 
-    def serialize(self, obj, fieldspec='*', **kwargs):
-        if isinstance(fieldspec, string_types):
-            fieldspec = Fieldspec(fieldspec)
-        elif fieldspec is None:
-            fieldspec = Fieldspec('*')
-
-        context = jsobj(
-            dumpval=dumpval,
-            reraise=True,
-        )
-        context.update(kwargs)
-
-        return self.raw_serialize(obj, fieldspec, context)
-
     def fuzzy_find(self, obj, minpriority=Priority.LOW):
         """ Find serializer for the fiven object.
 
@@ -171,9 +220,9 @@ class Serializer(object):
                 The object you want the serializer for.
 
             minpriority (int):
-                The minimum priority of the serializer. Serializers with lower priority
-                won't be returned. This allows to exclude fallback serializers from the
-                search.
+                The minimum priority of the serializer. Serializers with lower
+                priority won't be returned. This allows to exclude fallback
+                serializers from the search.
 
         Returns:
             Serializer function if found or ``None``.
@@ -202,16 +251,19 @@ def serialize(obj, fieldspec=None, **context):
     """ This will serialize the object based on the fieldspec passed.
 
     Args:
-        obj (anything):     The serialized object. Whether the object will be serialized
-                            depends on if there is a serializer defined for that object.
+        obj (anything):
+            The serialized object. Whether the object will be serialized
+            depends on if there is a serializer defined for that object.
         fieldspec (Fieldspec or str):
-           Fieldspec according to which the object will be serialized.
-        dumpval (Function): The value dumping function. This will be used to serialize
-                            primitive types.
+            Fieldspec according to which the object will be serialized.
+        dumpval (Function):
+            The value dumping function. This will be used to serialize
+            primitive types.
 
     Returns:
-        An object representation made only from primitive types. This can be passed to a
-        function like json.dumps to dump it to a output format of choice.
+        An object representation made only from primitive types. This can be
+        passed to a function like json.dumps to dump it to a output format of
+        choice.
 
     **Examples**
 
@@ -284,7 +336,7 @@ def serialize(obj, fieldspec=None, **context):
     return serializer.serialize(obj, fieldspec, **context)
 
 
-from .core_serializers import (
+from .core_serializers import (     # noqa
     serialize_dict, serialize_file_handle, serialize_iterable,
     serialize_primitive, serialize_serializable,
     PRIMITIVES,
