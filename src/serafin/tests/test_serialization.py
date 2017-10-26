@@ -77,7 +77,7 @@ class TestSerialize(unittest.TestCase):
 
     def test_context_is_being_passed(self):
         # pylint: disable=unused-variable
-        @serializer.strict(CustomClass)
+        @serializer.for_class(CustomClass)
         def custom_serialize(obj, fieldspec, context):
             context.called()
             self.assertIn('testval', context)

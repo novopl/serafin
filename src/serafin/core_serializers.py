@@ -9,19 +9,17 @@ performance optimisation in the `Serializer` itself.
 from __future__ import absolute_import, unicode_literals
 
 # stdlib imports
-from collections import OrderedDict
 from datetime import date as Date, datetime as Datetime
 from decimal import Decimal
 from itertools import chain
 from logging import getLogger
 
 # 3rd party imports
-from jsobj import jsobj
 from six import integer_types, string_types, binary_type
 
 # local imports
-from .core import serializer, Priority
-from .util import iterable, isfile
+from .core import serializer
+from .util import isfile
 
 
 L = getLogger(__name__)
@@ -32,10 +30,6 @@ PRIMITIVES = tuple(chain(
 ))
 
 
-@serializer.strict(OrderedDict)
-@serializer.strict(dict)
-@serializer.strict(jsobj)
-@serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, dict))
 def serialize_dict(dct, fieldspec, context):
     """ Serialize dictionary. """
     ret = {}
@@ -54,15 +48,11 @@ def serialize_dict(dct, fieldspec, context):
     return ret
 
 
-@serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, PRIMITIVES))
 def serialize_primitive(obj, fieldspec, context):
     """ Serialize a primitive value. """
     return context.dumpval('', obj)
 
 
-@serializer.strict(list)
-@serializer.strict(tuple)
-@serializer.fuzzy(Priority.MEDIUM, lambda o: not isfile(o) and iterable(o))
 def serialize_iterable(obj, fieldspec, context):
     """ Serialize any iterable except a string.
 
@@ -75,22 +65,16 @@ def serialize_iterable(obj, fieldspec, context):
     return ret
 
 
-@serializer.fuzzy(Priority.MEDIUM, lambda o: isfile(o))
 def serialize_file_handle(obj, fieldspec, context):
     """ Serializer for file handles. """
     return '(file handle)'
 
 
-@serializer.fuzzy(
-    Priority.MEDIUM,
-    lambda o: hasattr(o, 'serialize') and hasattr(o.serialize, '__call__')
-)
 def serialize_serializable(obj, fieldspec, context):
     """ Serialize any class that defines a ``serialize`` method. """
     return obj.serialize()
 
 
-@serializer.fuzzy(Priority.LOW, lambda o: isinstance(o, object))
 def serialize_object(obj, fieldspec, context):
     """ Serialize any object.
 

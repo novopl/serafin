@@ -89,10 +89,9 @@ class Serializer(object):
     """
 
     def __init__(self):
-        self.serializers = {}
         self.classmap = OrderedDict()
 
-    def strict(self, cls):
+    def for_class(self, cls):
         """ Decorator for serializers that match strictly by type.
 
         Each type can have only one strict serializer associated with it.
@@ -104,23 +103,6 @@ class Serializer(object):
                 ))
             self.classmap[cls] = fn
             return fn
-        return decorator
-
-    def fuzzy(self, priority, check):
-        """
-        >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, Model))
-        ... def serialize_model(model, fieldspec, context):
-        ...     # ...
-        """
-        def decorator(fn):      # pylint: disable=missing-docstring
-            fn._serializer_priority  = priority
-            fn._serializer_check     = check
-            if priority not in self.serializers:
-                self.serializers[priority] = [fn]
-            else:
-                self.serializers[priority].append(fn)
-            return fn
-
         return decorator
 
     def serialize(self, obj, fieldspec='*', **kwargs):
@@ -198,9 +180,8 @@ class Serializer(object):
                         serializer = fn
                         break
                 else:
-                    # As a last resort user the fuzzy search
-                    minpriority = context.get('minpriority', Priority.LOW)
-                    serializer = self.fuzzy_find(obj, minpriority)
+                    # As a last resort try generic serialize_object
+                    serializer = serialize_object
 
         # Do the actual serialization
         try:
@@ -211,37 +192,6 @@ class Serializer(object):
                 raise
 
         return out
-
-    def fuzzy_find(self, obj, minpriority=Priority.LOW):
-        """ Find serializer for the fiven object.
-
-        Args:
-            obj:
-                The object you want the serializer for.
-
-            minpriority (int):
-                The minimum priority of the serializer. Serializers with lower
-                priority won't be returned. This allows to exclude fallback
-                serializers from the search.
-
-        Returns:
-            Serializer function if found or ``None``.
-        """
-        serializer = None
-        for priority in sorted(self.serializers.keys(), key=lambda x: -x):
-            if priority >= minpriority:
-                for s in self.serializers[priority]:
-                    if s._serializer_check(obj):
-                        serializer = s
-                        break
-                else:
-                    continue
-                break
-        else:
-            raise ValueError("Don't know how to serialize {}".format(
-                str(type(obj))
-            ))
-        return serializer
 
 
 serializer = Serializer()
@@ -337,7 +287,11 @@ def serialize(obj, fieldspec=None, **context):
 
 
 from .core_serializers import (     # noqa
-    serialize_dict, serialize_file_handle, serialize_iterable,
-    serialize_primitive, serialize_serializable,
+    serialize_dict,
+    serialize_file_handle,
+    serialize_iterable,
+    serialize_object,
+    serialize_primitive,
+    serialize_serializable,
     PRIMITIVES,
 )
