@@ -16,9 +16,10 @@ setup(
     url="http://github.com/novopl/serafin",
     description="Python library that implementing selective serialization",
     long_description=read('README.rst'),
-    packages=find_packages('src'),
+    package_dir={'serafin': 'src/serafin'},
+    packages=['serafin'],
     install_requires=[
-        l.strip() for l in read('requirements.txt').split() if '==' in l
+        l.strip() for l in read('ops/requirements.txt').split() if '==' in l
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
