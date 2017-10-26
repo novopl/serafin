@@ -29,9 +29,3 @@ Setting up development repo
     $ virtualenv env
     $ source ./env/bin/activate
     $ pip install -r requirements.txt -r devrequirements.txt
-
-
-Reference documentation
-=======================
-
-.. automodule:: serafin

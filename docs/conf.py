@@ -4,7 +4,7 @@ import sys
 import sphinx_rtd_theme
 
 
-project = u"serafin-refdoc"
+project = u"serafin"
 copyright = u"2016-2017, Mateusz 'novo' Klos"
 author = u"Mateusz 'novo' Klos"
 

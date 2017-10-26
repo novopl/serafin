@@ -35,7 +35,9 @@ env
 .build
 frontend/dist
 frontend/node_modules
-docs/html/
+/docs/html/
+/docs/ref
+
 
 ##############
 # Data files #

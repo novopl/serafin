@@ -281,7 +281,7 @@ def serialize(obj, fieldspec=None, **context):
     Here are a few examples of what fields would be selected by each
     fieldspec (second argument for ``serialize``):
 
-    >>> from igor.serialize import serialize
+    >>> from serafin import serialize
     >>> serialize(model, '*') == {
     ...     'field1': 10,
     ...     'field2': {},
@@ -319,7 +319,7 @@ def serialize(obj, fieldspec=None, **context):
     ... }
     True
 
-    Double wirldcard (``**``) will expand all fields recursively. This is the
+    Double wildcard (``**``) will expand all fields recursively. This is the
     most heavy call.
 
     >>> serialize(model, '**') == {

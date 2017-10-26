@@ -1,6 +1,6 @@
 """
 
-``igor.serialize`` is a serialization system that allows flexible serialization
+**serafin** is a serialization system that allows flexible serialization
 of any type of object according to a provided fieldspec. The fieldspec tells
 the serialize which attribute/fields/members of the given object should be
 serialized. This allows for a very flexible serialization system, especially in
@@ -8,15 +8,15 @@ the context of API endpoints where we can write one endpoint and allow client
 to pass the fieldspec describing how he wants the output to be formatted.
 
 
-.. autoclass:: igor.serialize.base.Priority
+.. autoclass:: serafin.core.Priority
     :members:
 
 
-.. autoclass:: igor.serialize.base.Serializer
+.. autoclass:: serafin.core.Serializer
     :members:
 
 
-.. autofunction:: igor.serialize.base.serialize
+.. autofunction:: serafin.core.serialize
 
 """
 from .core import Priority, serializer, serialize

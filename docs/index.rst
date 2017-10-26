@@ -8,7 +8,7 @@ Reference
 .. toctree::
     :maxdepth: 2
 
-    ref/refdoc/index
+    ref/serafin/index
     ref/commands/index
 
 .. include:: ../README.rst
