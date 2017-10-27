@@ -18,8 +18,8 @@ from logging import getLogger
 from six import integer_types, string_types, binary_type
 
 # local imports
-from .core import serializer
-from .util import isfile
+from .core import serialize
+from .util import is_file
 
 
 L = getLogger(__name__)
@@ -40,7 +40,7 @@ def serialize_dict(dct, fieldspec, context):
     for name, value in dct.items():
         if name in fieldspec:
             try:
-                ret[name] = serializer.raw_serialize(
+                ret[name] = serialize.raw(
                     value, fieldspec[name], context
                 )
             except ValueError:
@@ -61,7 +61,7 @@ def serialize_iterable(obj, fieldspec, context):
     """
     ret = []
     for item in obj:
-        ret.append(serializer.raw_serialize(item, fieldspec, context))
+        ret.append(serialize.raw(item, fieldspec, context))
     return ret
 
 
@@ -109,10 +109,10 @@ def serialize_object(obj, fieldspec, context):
     filters = [
         lambda n, v: not (n.startswith('__') or n.endswith('__')),
         lambda n, v: not callable(v),
-        lambda n, v: not isfile(v),
+        lambda n, v: not is_file(v),
     ]
 
-    def isval(attrname, attrvalue):
+    def is_val(attrname, attrvalue):
         """
         Check if the given attribute is a value that should be serialized.
         """
@@ -133,8 +133,8 @@ def serialize_object(obj, fieldspec, context):
                 if context.reraise:
                     raise
 
-            if isval(name, value):
-                ret[name] = serializer.raw_serialize(
+            if is_val(name, value):
+                ret[name] = serialize.raw(
                     value, fieldspec[name], context
                 )
     return ret
