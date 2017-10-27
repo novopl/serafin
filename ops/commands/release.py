@@ -71,6 +71,11 @@ def make_release(component='patch', exact=None):
     log.info("  new version: ^35{}".format(new_ver))
 
     with project.inside(quiet=True):
+        branch = 'release/' + new_ver
+
+        log.info("Checking out new branch ^35{}", branch)
+        local('git checkout -b ' + branch)
+
         log.info("Creating commit for the release")
         local('git add {ver_file} && git commit -m "Release: v{ver}"'.format(
             ver_file=VERSION_FILE,
