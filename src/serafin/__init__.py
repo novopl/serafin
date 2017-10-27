@@ -20,7 +20,7 @@ to pass the fieldspec describing how he wants the output to be formatted.
 
 """
 from .core import Priority, serializer, serialize
-from .core_serializers import *     # pylint: disable=wildcard-import
+from .serializers import *     # pylint: disable=wildcard-import
 from .fieldspec import Fieldspec
 __all__ = [
     'Priority',
