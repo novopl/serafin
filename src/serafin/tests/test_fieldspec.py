@@ -275,7 +275,7 @@ class TestRestrict(TestCase):
         self.assertNotIn('field4', restricted)
         self.assertTrue(restricted.all)
 
-    def test_regression_leaking_all(self):
+    def test_regression_leaking_all_to_result(self):
         spec = Fieldspec('*,columns(name)')
         other = Fieldspec('id,name')
         restricted = Fieldspec(spec).restrict(other)
@@ -283,9 +283,10 @@ class TestRestrict(TestCase):
         self.assertIn('id', restricted)
         self.assertIn('name', restricted)
         self.assertNotIn('columns', restricted)
+        self.assertNotIn('*', restricted)
         self.assertFalse(restricted.all)
 
-    def test_regression_1(self):
+    def test_regression_properly_limit_sub_specs(self):
         spec = Fieldspec('*,phone_numbers(number)')
         other = Fieldspec('type,phone_numbers(active,mobile,number)')
         restricted = spec.restrict(other)
