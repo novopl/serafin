@@ -264,7 +264,7 @@ class TestRestrict(TestCase):
         self.assertIn('field3', restricted)
         self.assertNotIn('field1', restricted)
 
-    def test_restrict_all2(self):
+    def test_restrict_all_with_exclusions(self):
         spec = Fieldspec('*,-field1')
         other = Fieldspec('*,-field4')
         restricted = Fieldspec(spec).restrict(other)
@@ -275,11 +275,20 @@ class TestRestrict(TestCase):
         self.assertNotIn('field4', restricted)
         self.assertTrue(restricted.all)
 
+    def test_regression_leaking_all(self):
+        spec = Fieldspec('*,columns(name)')
+        other = Fieldspec('id,name')
+        restricted = Fieldspec(spec).restrict(other)
+
+        self.assertIn('id', restricted)
+        self.assertIn('name', restricted)
+        self.assertNotIn('columns', restricted)
+        self.assertFalse(restricted.all)
+
     def test_regression_1(self):
         spec = Fieldspec('*,phone_numbers(number)')
         other = Fieldspec('type,phone_numbers(active,mobile,number)')
-        restricted = Fieldspec(spec)
-        restricted.restrict(other)
+        restricted = spec.restrict(other)
 
         self.assertIn('type', restricted)
         self.assertNotIn('foo', restricted)
