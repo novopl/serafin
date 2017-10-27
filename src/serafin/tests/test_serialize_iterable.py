@@ -10,7 +10,7 @@ from jsobj import jsobj
 
 # local imports
 from ..core import dump_val
-from ..core_serializers import serialize_iterable
+from ..serializers import serialize_iterable
 from ..fieldspec import Fieldspec
 
 
