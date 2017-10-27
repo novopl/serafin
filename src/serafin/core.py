@@ -15,33 +15,10 @@ from six import iteritems, string_types
 
 # local imports
 from .fieldspec import Fieldspec
-from .util import Enum, iterable, isfile
+from .util import iterable, is_file
 
 
 L = getLogger(__name__)
-
-
-class Priority(Enum):
-    """
-    **HIGH**
-        Serializers matching (almost) exactly, very strict. The client code
-        should assume, that the serializer implements perfect or near perfect
-        serialization for all of it's matching types.
-
-    **MEDIUM**
-        Serializer is able to do a decent job at serializing its input values.
-        This priority should be used for a more general type matchers and as
-        a "decent polyfill" - Means it can be improved, but it's working well
-        for now.
-
-    **LOW**
-        This priority should be used by all serializers that match a wide
-        range of types. In most cases this will be used as a fallback, i.e. no
-        serializers with higher priority (better support for the type) match.
-    """
-    HIGH    = 100
-    MEDIUM  = 50
-    LOW     = 0
 
 
 def dump_val(name, value):
@@ -52,41 +29,7 @@ def dump_val(name, value):
 
 
 class Serializer(object):
-    """
-    HIGH priority is for serializers with a strict selector.
-
-    >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, Model))
-    ... def serialize_model(model, fieldspec, context):
-    ...     pass
-
-    >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, dict))
-    ... def serialize_dict(model, fieldspec, context):
-    ...     pass
-
-    >>> @serializer.fuzzy(Priority.HIGH, lambda o: isinstance(o, jsobj))
-    ... def serialize_jsobj(model, fieldspec, context):
-    ...     pass
-
-    >>> @serializer.fuzzy(Priority.HIGH,
-    ...     lambda o: isinstance(o, (int, float, str, unicode, bytes))
-    ... )
-    ... def serialize_primitive(model, fieldspec, context):
-    ...     pass
-
-    MEDIUM priority since this will catch every iterable, and we might want
-    a more custom serializer.
-
-    >>> @serializer.fuzzy(Priority.MEDIUM, lambda o: iterable(o))
-    ... def serialize_iterable(model, fieldspec, context):
-    ...     pass
-
-    Low because it will catch almost everything. This is a kind of general
-    fallback if we don't have specialized serializer.
-
-    >>> @serializer.fuzzy(Priority.LOW, lambda o: isinstance(o, object))
-    ... def serialize_object(model, fieldspec, context):
-    ...     pass
-    """
+    """ The serializer implementation """
 
     def __init__(self):
         self.classmap = OrderedDict()
@@ -164,7 +107,7 @@ class Serializer(object):
                 serializer = serialize_dict
             elif isinstance(obj, PRIMITIVES):
                 serializer = serialize_primitive
-            elif isfile(obj):
+            elif is_file(obj):
                 serializer = serialize_file_handle
             elif iterable(obj):
                 serializer = serialize_iterable
@@ -289,7 +232,7 @@ def serialize(obj, fieldspec=None, **context):
     return serializer.serialize(obj, fieldspec, **context)
 
 
-from .core_serializers import (     # noqa
+from .serializers import (     # noqa
     PRIMITIVES,
     serialize_dict,
     serialize_file_handle,

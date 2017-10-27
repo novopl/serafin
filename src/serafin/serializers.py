@@ -19,7 +19,7 @@ from six import integer_types, string_types, binary_type
 
 # local imports
 from .core import serializer
-from .util import isfile
+from .util import is_file
 
 
 L = getLogger(__name__)
@@ -109,7 +109,7 @@ def serialize_object(obj, fieldspec, context):
     filters = [
         lambda n, v: not (n.startswith('__') or n.endswith('__')),
         lambda n, v: not callable(v),
-        lambda n, v: not isfile(v),
+        lambda n, v: not is_file(v),
     ]
 
     def isval(attrname, attrvalue):
