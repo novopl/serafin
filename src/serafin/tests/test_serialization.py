@@ -10,7 +10,7 @@ from functools import partial
 from jsobj import jsobj
 
 # local imports
-from .. import serialize, serializer
+from .. import serialize
 
 
 class CustomClass(jsobj):
@@ -77,7 +77,7 @@ class TestSerialize(unittest.TestCase):
 
     def test_context_is_being_passed(self):
         # pylint: disable=unused-variable
-        @serializer.for_class(CustomClass)
+        @serialize.type(CustomClass)
         def custom_serialize(obj, fieldspec, context):
             context.called()
             self.assertIn('testval', context)
