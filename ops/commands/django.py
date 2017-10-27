@@ -13,7 +13,7 @@ import sys
 from os import environ
 
 # local imports
-from . import config as conf
+from .common import conf
 
 
 def _manage_cmd(cmd, settings=None):
@@ -22,7 +22,7 @@ def _manage_cmd(cmd, settings=None):
     This function eliminates the need for having ``manage.py`` (reduces file
     clutter).
     """
-    sys.path.insert(0, conf.SRC_DIR)
+    sys.path.insert(0, conf.get('SRC_DIR'))
 
     settings = settings or conf.get('DJANGO_SETTINGS', None)
     environ.setdefault("DJANGO_SETTINGS_MODULE", settings)
@@ -34,7 +34,7 @@ def _manage_cmd(cmd, settings=None):
     execute_from_command_line(args)
 
 
-def devserver(settings=None, port=8000):
+def devserver(port=8000, settings=None):
     """ Run dev server. """
     _manage_cmd(['runserver', '0.0.0.0:{}'.format(port)], settings)
 

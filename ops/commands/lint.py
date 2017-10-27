@@ -9,17 +9,13 @@ from six import string_types
 from fabric.api import local
 
 # local imports
-from . import config as conf
-from .common import _surround_paths_with_quotes
-from .common import _sysmsg
+from .common import conf
+from .common import fs
+from .common import log
 
 
-PYLINT_CFG_PATH = conf.get(
-    'PYLINT_CFG_PATH', conf.repo_path('ops/tools/pylint.ini')
-)
-PEP8_CFG_PATH = conf.get(
-    'PEP8_CFG_PATH', conf.repo_path('ops/tools/pep8.ini')
-)
+PYLINT_CFG_PATH = conf.get_path('PYLINT_CFG_PATH', 'ops/tools/pylint.ini')
+PEP8_CFG_PATH = conf.get_path('PEP8_CFG_PATH', 'ops/tools/pep8.ini')
 PKGS_PATHS = conf.get('PKGS_PATHS', [])
 
 
@@ -31,17 +27,17 @@ def _lint_files(paths):
     if isinstance(paths, string_types):
         raise ValueError("paths must be an array of strings")
 
-    _sysmsg("Linting")
+    log.info("Linting")
     for path in paths:
         print("--   {}".format(path))
 
-    paths = _surround_paths_with_quotes(paths)
+    paths = fs.surround_paths_with_quotes(paths)
 
-    _sysmsg("Checking PEP8 compatibility")
+    log.info("Checking PEP8 compatibility")
     pep8_cmd = 'pep8 --config {} {{}}'.format(PEP8_CFG_PATH)
     pep8_ret = local(pep8_cmd.format(paths)).return_code
 
-    _sysmsg("Running linter")
+    log.info("Running linter")
     pylint_cmd = 'pylint --rcfile {} {{}}'.format(PYLINT_CFG_PATH)
     pylint_ret = local(pylint_cmd.format(paths)).return_code
 
@@ -56,5 +52,5 @@ def _lint_files(paths):
 
 def lint():
     """ Run pep8 and pylint on all project files. """
-    if not _lint_files(PKGS_PATHS):
+    if not _lint_files([conf.proj_path(p) for p in PKGS_PATHS]):
         exit(1)

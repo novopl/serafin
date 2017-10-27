@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 File system related helpers.
-
-.. autofunction:: _surround_paths_with_quotes
-.. autofunction:: _rm_glob
 """
 from __future__ import absolute_import, unicode_literals
 
@@ -18,10 +15,9 @@ from fabric.api import local, quiet
 
 # local imports
 from . import log
-from .log import _sysmsg
 
 
-def _surround_paths_with_quotes(paths):
+def surround_paths_with_quotes(paths):
     """ Put quotes around all paths and join them with space in between. """
     if isinstance(paths, string_types):
         raise ValueError(
@@ -31,9 +27,9 @@ def _surround_paths_with_quotes(paths):
     return ' '.join('"' + path + '"' for path in paths)
 
 
-def _rm_glob(pattern):
+def rm_glob(pattern):
     """ Remove all files matching the given glob *pattern*. """
-    log._sysmsg("Removing files matching {}", pattern)
+    log.info("Removing files matching {}", pattern)
 
     with quiet():
         cmd = ' '.join([
@@ -49,8 +45,8 @@ def _rm_glob(pattern):
             continue
 
         if not isdir(path):
-            _sysmsg('  ^91[file] ^90{}'.format(path))
+            log.info('  ^91[file] ^90{}'.format(path))
             remove(path)
         else:
-            _sysmsg('  ^91[dir]  ^90{}'.format(path))
+            log.info('  ^91[dir]  ^90{}'.format(path))
             rmtree(path)

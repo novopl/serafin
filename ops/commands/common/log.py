@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Helpers for nice shell output formatting.
-
-.. autofunction:: _cstr
-.. autofunction:: _sysmsg
-.. autofunction:: _errmsg
 """
 from __future__ import absolute_import, unicode_literals
 
@@ -12,20 +8,20 @@ from __future__ import absolute_import, unicode_literals
 import re
 
 
-def _cstr(msg):
+def cstr(msg):
     """ Format color marked string into proper shell opcodes. """
     return re.sub(r'\^(\d{1,2})', '\x1b[\\1m', msg)
 
 
-def _cprint(msg, *args, **kw):
+def cprint(msg, *args, **kw):
     """ Print colored message to stdout. """
     if len(args) or len(kw):
         msg = msg.format(*args, **kw)
 
-    print(_cstr(msg))
+    print(cstr(msg))
 
 
-def _sysmsg(msg, *args, **kw):
+def info(msg, *args, **kw):
     """ Print sys message to stdout.
 
     System messages should inform about the flow of the script. This should
@@ -34,10 +30,10 @@ def _sysmsg(msg, *args, **kw):
     if len(args) or len(kw):
         msg = msg.format(*args, **kw)
 
-    print(_cstr('-- ^32{}^0'.format(msg)))
+    print(cstr('-- ^32{}^0'.format(msg)))
 
 
-def _errmsg(msg, *args, **kw):
+def err(msg, *args, **kw):
     """ Per step status messages
 
     Use this locally in a command definition to highlight more important
@@ -46,4 +42,4 @@ def _errmsg(msg, *args, **kw):
     if len(args) or len(kw):
         msg = msg.format(*args, **kw)
 
-    print(_cstr('^-- 31{}^0'.format(msg)))
+    print(cstr('^-- 31{}^0'.format(msg)))

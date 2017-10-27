@@ -168,12 +168,8 @@ class Serializer(object):
                 serializer = serialize_file_handle
             elif iterable(obj):
                 serializer = serialize_iterable
-            elif callable(getattr(obj, 'serafin_serialize')):
+            elif callable(getattr(obj, 'serafin_serialize', None)):
                 serializer = serialize_serializable
-            elif callable(getattr(obj, 'as_dict')):
-                serializer = ThirdPartySerializer('as_dict')
-            elif callable(getattr(obj, 'to_dict')):
-                serializer = ThirdPartySerializer('as_dict')
             else:
                 # Look if we have direct serializer for a base class of obj
                 for c, fn in iteritems(self.classmap):
@@ -181,8 +177,14 @@ class Serializer(object):
                         serializer = fn
                         break
                 else:
-                    # As a last resort try generic serialize_object
-                    serializer = serialize_object
+                    # Try if we can find 3rd party serializers.
+                    if callable(getattr(obj, 'as_dict', None)):
+                        serializer = ThirdPartySerializer('as_dict')
+                    elif callable(getattr(obj, 'to_dict', None)):
+                        serializer = ThirdPartySerializer('as_dict')
+                    else:
+                        # As a last resort try generic serialize_object
+                        serializer = serialize_object
 
         # Do the actual serialization
         try:

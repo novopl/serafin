@@ -2,9 +2,6 @@
 """
 Functionality related to versioning. This makes project version management
 much easier.
-
-.. autofunction:: _bump_version
-.. autofunction:: _bump_version_file
 """
 from __future__ import absolute_import
 
@@ -23,7 +20,18 @@ RE_VERSION = re.compile(
 )
 
 
-def _get_current_version(version_file):
+def is_valid(version_str):
+    """ Check if the given string is a version string
+
+    :param str|unicode version_str:
+        A string to check
+    :return bool:
+        **True** if the given string is a version.
+    """
+    return version_str and RE_VERSION.match(version_str)
+
+
+def get_current(version_file):
     """ Return the current project version read from *version_file*.
 
     :param {str|unicode} version_file:
@@ -42,7 +50,7 @@ def _get_current_version(version_file):
         return fp.read().strip()
 
 
-def _bump_version(version, component='patch'):
+def bump(version, component='patch'):
     """ Bump the given version component.
 
     :param str version:
@@ -57,7 +65,6 @@ def _bump_version(version, component='patch'):
     :return str:
         Bumped version as a string.
     """
-
     if component not in ('major', 'minor', 'patch'):
         raise ValueError("Invalid version component: {}".format(component))
 
@@ -90,21 +97,3 @@ def _bump_version(version, component='patch'):
         new_ver += '.' + patch
 
     return new_ver
-
-
-def _bump_version_file(version_file, component='patch'):
-    """ Bump version stored in a file.
-
-    :param {str|unicode} version_file:
-        Path to the file storing the current version.
-    :param {str|unicode} component:
-        Version component to bump. Same as in `bump_version`.
-    """
-    old_ver = _get_current_version(version_file)
-
-    new_ver = _bump_version(old_ver, component)
-
-    with open(version_file, 'w') as fp:
-        fp.write(new_ver)
-
-    return old_ver, new_ver
