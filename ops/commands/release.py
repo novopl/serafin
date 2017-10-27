@@ -42,7 +42,7 @@ def bump_version(component='patch', exact=None):
     log.info("  new version: ^35{}".format(new_ver))
 
 
-def make_release(component='patch'):
+def make_release(component='patch', exact=None):
     """ Release a new version of the project.
 
     This will bump the version number (patch component by default) + add and tag
@@ -58,7 +58,11 @@ def make_release(component='patch'):
 
     log.info("Bumping package version")
     old_ver = ver.get_current(VERSION_FILE)
-    new_ver = ver.bump(old_ver, component)
+
+    if ver.is_valid(exact):
+        new_ver = exact
+    else:
+        new_ver = ver.bump(old_ver, component)
 
     with open(VERSION_FILE, 'w') as fp:
         fp.write(new_ver)
@@ -67,6 +71,11 @@ def make_release(component='patch'):
     log.info("  new version: ^35{}".format(new_ver))
 
     with project.inside(quiet=True):
+        branch = 'release/' + new_ver
+
+        log.info("Checking out new branch ^35{}", branch)
+        local('git checkout -b ' + branch)
+
         log.info("Creating commit for the release")
         local('git add {ver_file} && git commit -m "Release: v{ver}"'.format(
             ver_file=VERSION_FILE,
