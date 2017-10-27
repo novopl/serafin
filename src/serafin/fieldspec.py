@@ -190,9 +190,10 @@ class Fieldspec(object):
 
             membstr = m.group('members')
             members = True if membstr is None else Fieldspec(membstr)
-            group[name] = members
             if name in ('*', '**'):
                 self.all = True
+            else:
+                group[name] = members
 
     def _splitfields(self, string):
         """
@@ -288,8 +289,7 @@ class Fieldspec(object):
             common = my_fields
         elif self.all:
             self.all = False
-            # self.fields = OrderedDict(fieldspec.fields)
-            common = my_fields | other_fields
+            common = other_fields
         else:
             common = my_fields & other_fields
 

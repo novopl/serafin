@@ -42,4 +42,4 @@ def err(msg, *args, **kw):
     if len(args) or len(kw):
         msg = msg.format(*args, **kw)
 
-    print(cstr('^-- 31{}^0'.format(msg)))
+    print(cstr('-- ^31{}^0'.format(msg)))

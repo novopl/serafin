@@ -43,6 +43,6 @@ def fe(cmd):
     inside the FRONTEND_DIR.
     """
     if cmd in FRONTEND_CMDS:
-        _fe_cmd(cmd)
+        _fe_cmd(FRONTEND_CMDS[cmd])
     else:
         log.err("No {} in FRONTEND_CMDS".format(cmd))
