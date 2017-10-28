@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" Serialization fieldspec implementation.
+""" Serialization field spec implementation.
 
 This is what makes the serialization so flexible as it allows to cherry-pick
 what is actually serialized. This module just implements the serialization field
@@ -89,14 +89,14 @@ class Fieldspec(object):
     be one of:
         - None
         - ``True`` if the subfield spec is just the field name, ie ``field``.
-        - ``Fieldspec`` if the subfield has a fieldspec defined, ie
+        - ``Fieldspec`` if the subfield has a field spec defined, ie
          ``field(sub1,sub2)``.
 
-    If the fieldspec contains ``*`` it means at that level all fields are
+    If the field spec contains ``*`` it means at that level all fields are
     included by default. You can still exclude them using ``-`` but by default
     all fields within an object are included.
 
-    The special fieldspec `**` can be used and it means the same thing as ``*``
+    The special field spec `**` can be used and it means the same thing as ``*``
     but is applied recursively to all objects. **Be very careful with using it
     as it will try to serialize EVERYTHING and in many cases you will run into
     problems.
@@ -129,7 +129,7 @@ class Fieldspec(object):
         """ Return **True** if the current spec is empty.
 
         :return bool:
-            **True** if nothing represented by this fieldspec should be
+            **True** if nothing represented by this field spec should be
             included as part of the serialization result.
         """
         return len(self.fields) == 0 and not self.all
@@ -169,7 +169,7 @@ class Fieldspec(object):
     def _parse(self, string):
         """ Parse the spec string.
         Args:
-            string (str):   A string representation of the fieldspec.
+            string (str):   A string representation of the field spec.
 
         The string is split on the high level by commas and then processed.
         The parser will take into account the parenthesis and skip them when
@@ -229,21 +229,21 @@ class Fieldspec(object):
         fields.append(string[start:])
         return fields
 
-    def merge(self, fieldspec):
-        """ Extend fieldspec using a different one. The result should be
+    def merge(self, spec):
+        """ Extend field spec using a different one. The result should be
         the union of both.
 
         .. notes:: If the field is in both specs and it's values are different
         there is a conflict. The conflict can be resolved by merging the sub
         specs.
         """
-        if isinstance(fieldspec, string_types):
-            fieldspec = Fieldspec(fieldspec)
+        if isinstance(spec, string_types):
+            spec = Fieldspec(spec)
 
-        if fieldspec.all:
+        if spec.all:
             self.all = True
 
-        for name, members in iteritems(fieldspec.fields):
+        for name, members in iteritems(spec.fields):
             try:
                 mymembers = self.fields[name]
                 # There already is a field like that, we need to sort
@@ -253,14 +253,14 @@ class Fieldspec(object):
                         mymembers, members
                     )
             except KeyError:
-                # this fieldspec doesn't have the key yet
+                # this field spec doesn't have the key yet
                 self.fields[name] = members
 
         exclude = self.exclude
         self.exclude = OrderedDict()
         for name, members in iteritems(exclude):
             try:
-                members = fieldspec.fields[name]
+                members = spec.fields[name]
                 self.fields[name] = members
             except KeyError:
                 self.exclude[name] = members
@@ -277,15 +277,15 @@ class Fieldspec(object):
         else:  # mymembers == True:
             return members
 
-    def restrict(self, fieldspec):
-        """ Restrict the current fieldspec by another one. The result should be
+    def restrict(self, spec):
+        """ Restrict the current field spec by another one. The result should be
         the intersection of both.
         """
         was_all = self.all
         my_fields = frozenset(self.fields.keys())
-        other_fields = frozenset(fieldspec.fields.keys())
+        other_fields = frozenset(spec.fields.keys())
 
-        if fieldspec.all:
+        if spec.all:
             common = my_fields
         elif self.all:
             self.all = False
@@ -293,7 +293,7 @@ class Fieldspec(object):
         else:
             common = my_fields & other_fields
 
-        self.exclude.update(fieldspec.exclude)
+        self.exclude.update(spec.exclude)
 
         newfields = []
         for name in common:
@@ -301,11 +301,11 @@ class Fieldspec(object):
                 mymembers = self.fields[name]
             except KeyError:
                 if was_all:
-                    newfields.append((name, fieldspec.fields[name]))
+                    newfields.append((name, spec.fields[name]))
                 continue
 
             try:
-                members = fieldspec.fields[name]
+                members = spec.fields[name]
                 if mymembers != members:
                     newfields.append((name, self._resolve_restrict_conflict(
                         mymembers, members
@@ -330,6 +330,6 @@ class Fieldspec(object):
 
     @classmethod
     def from_query(self, qs):
-        """ Create a fieldspec from a HTTP request query string. """
+        """ Create a field spec from a HTTP request query string. """
         qs  = dict(parse_qsl(qs)) if isinstance(qs, string_types) else qs
         return Fieldspec(qs.get('_fields', '*'))

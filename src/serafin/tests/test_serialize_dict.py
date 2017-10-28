@@ -5,10 +5,8 @@ from __future__ import absolute_import, unicode_literals
 # stdlib imports
 from unittest import TestCase
 
-# 3rd party imports
-from jsobj import jsobj
-
 # local imports
+from .. import Context
 from ..core import dump_val
 from ..serializers import serialize_dict
 from ..fieldspec import Fieldspec
@@ -25,7 +23,7 @@ class TestSerializeDict(TestCase):
                 'field2': 'sub val'
             }
         }
-        ctx = jsobj(dumpval=dump_val)
+        ctx = Context(dumpval=dump_val)
         result = serialize_dict(data, Fieldspec('*'), ctx)
         self.assertDictEqual(result, {
             'field1':  123,
@@ -35,6 +33,6 @@ class TestSerializeDict(TestCase):
         })
 
     def test_converts_string_to_Fieldspec(self):
-        ctx = jsobj(dumpval=dump_val)
+        ctx = Context(dumpval=dump_val)
         output = serialize_dict({'test': 123}, Fieldspec('*'), ctx)
         self.assertDictEqual(output, {'test': 123})

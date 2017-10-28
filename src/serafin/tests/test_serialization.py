@@ -6,14 +6,11 @@ from __future__ import absolute_import, unicode_literals
 import unittest
 from functools import partial
 
-# 3rd party imports
-from jsobj import jsobj
-
 # local imports
-from .. import serialize
+from .. import Context, serialize
 
 
-class CustomClass(jsobj):
+class CustomClass(Context):
     pass
 
 
@@ -78,13 +75,13 @@ class TestSerialize(unittest.TestCase):
     def test_context_is_being_passed(self):
         # pylint: disable=unused-variable
         @serialize.type(CustomClass)
-        def custom_serialize(obj, fieldspec, context):
-            context.called()
-            self.assertIn('testval', context)
-            self.assertEqual(context.testval, 123)
+        def custom_serialize(obj, spec, ctx):
+            ctx.called()
+            self.assertIn('test_val', ctx)
+            self.assertEqual(ctx.test_val, 123)
 
-        tmp = jsobj(called=False)
-        obj = CustomClass(testval=321)
+        tmp = Context(called=False)
+        obj = CustomClass(test_val=321)
         called = partial(setattr, tmp, 'called', True)
-        serialize(obj, '*', testval=123, called=called)
+        serialize(obj, '*', test_val=123, called=called)
         self.assertTrue(tmp.called)
