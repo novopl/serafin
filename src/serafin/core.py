@@ -31,13 +31,13 @@ def dump_val(name, value):
 class Serializer(object):
     """ The serializer implementation
 
-    This will serialize the object based on the fieldspec passed.
+    This will serialize the object based on the field spec passed.
 
     Args:
         obj (anything):
             The serialized object. Whether the object will be serialized
             depends on if there is a serializer defined for that object.
-        fieldspec (Fieldspec or str):
+        spec (Fieldspec or str):
             Fieldspec according to which the object will be serialized.
         dumpval (Function):
             The value dumping function. This will be used to serialize
@@ -62,7 +62,7 @@ class Serializer(object):
     ... }
 
     Here are a few examples of what fields would be selected by each
-    fieldspec (second argument for ``serialize``):
+    spec (second argument for ``serialize``):
 
     >>> from serafin import serialize
     >>> serialize(model, '*') == {
@@ -134,24 +134,24 @@ class Serializer(object):
             return fn
         return decorator
 
-    def __call__(self, obj, fieldspec='*', **kwargs):
-        """ Serialize the object according to the given fieldspec.
+    def __call__(self, obj, spec='*', **kwargs):
+        """ Serialize the object according to the given field spec.
 
         This is the method that should be used by the users of the lib.
-        Compared to `raw_serialize()` it will convert fieldspec to a
+        Compared to `raw_serialize()` it will convert field spec to a
         `Fieldspec` instance if necessary and build the serialization
         context based on the extra keyword arguments passed.
 
         :param Any obj:
-        :param Fieldspec|unicode|str fieldspec:
+        :param Fieldspec|unicode|str spec:
         :param dict kwargs:
         :return dict.:
             Returns an object that can be directly dumped to JSON.
         """
-        if isinstance(fieldspec, string_types):
-            fieldspec = Fieldspec(fieldspec)
-        elif fieldspec is None:
-            fieldspec = Fieldspec('*')
+        if isinstance(spec, string_types):
+            spec = Fieldspec(spec)
+        elif spec is None:
+            spec = Fieldspec('*')
 
         ctx = Context(
             dumpval=dump_val,
@@ -159,15 +159,15 @@ class Serializer(object):
         )
         ctx.update(kwargs)
 
-        return self.raw(obj, fieldspec, ctx)
+        return self.raw(obj, spec, ctx)
 
-    def raw(self, obj, fieldspec, ctx):
-        """ Raw serialize without parsing the fieldspec.
+    def raw(self, obj, spec, ctx):
+        """ Raw serialize without parsing the field spec.
 
         This method should be used when writing new serializers for performance
         reasons. When writing a new serializer you will already have a
         serialization context passed to the serializer function and the
-        fieldspec will also already be passed as `Fieldspec` instance. Using
+        field spec will also already be passed as `Fieldspec` instance. Using
         `raw_serializer` will remove the overhead of creating those at
         each call level. The `serialize` method will create those when executed
         by the user code and then pass them to the serializer function. That
@@ -175,7 +175,7 @@ class Serializer(object):
         but won't need the overhead of calling `serialize()` again.
 
         :param Any obj:
-        :param Fieldspec fieldspec:
+        :param Fieldspec spec:
         :param dict ctx:
         :return dict|list|str|int:
             Returns an object that can be directly dumped to JSON.
@@ -217,7 +217,7 @@ class Serializer(object):
 
         # Do the actual serialization
         try:
-            out = serializer(obj, fieldspec, ctx)
+            out = serializer(obj, spec, ctx)
         except Exception as ex:
             out = "({}: {})".format(ex.__class__.__name__, str(ex))
             if ctx.get('reraise', True):
