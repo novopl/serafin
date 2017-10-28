@@ -30,30 +30,28 @@ PRIMITIVES = tuple(chain(
 ))
 
 
-def serialize_dict(dct, fieldspec, context):
+def serialize_dict(dct, spec, ctx):
     """ Serialize dictionary. """
     ret = {}
 
-    if fieldspec is True or fieldspec.empty():
+    if spec is True or spec.empty():
         return {}
 
     for name, value in dct.items():
-        if name in fieldspec:
+        if name in spec:
             try:
-                ret[name] = serialize.raw(
-                    value, fieldspec[name], context
-                )
+                ret[name] = serialize.raw(value, spec[name], ctx)
             except ValueError:
                 pass
     return ret
 
 
-def serialize_primitive(obj, fieldspec, context):
+def serialize_primitive(obj, spec, ctx):
     """ Serialize a primitive value. """
-    return context.dumpval('', obj)
+    return ctx.dumpval('', obj)
 
 
-def serialize_iterable(obj, fieldspec, context):
+def serialize_iterable(obj, spec, ctx):
     """ Serialize any iterable except a string.
 
     Since strings are a very special case of iterables, they are handled
@@ -61,18 +59,18 @@ def serialize_iterable(obj, fieldspec, context):
     """
     ret = []
     for item in obj:
-        ret.append(serialize.raw(item, fieldspec, context))
+        ret.append(serialize.raw(item, spec, ctx))
     return ret
 
 
-def serialize_file_handle(obj, fieldspec, context):
+def serialize_file_handle(obj, spec, ctx):
     """ Serializer for file handles. """
     return '(file handle)'
 
 
-def serialize_serializable(obj, fieldspec, context):
+def serialize_serializable(obj, spec, ctx):
     """ Serialize any class that defines a ``serialize`` method. """
-    return obj.serialize(fieldspec, context)
+    return obj.serialize(spec, ctx)
 
 
 class ThirdPartySerializer(object):
@@ -88,13 +86,13 @@ class ThirdPartySerializer(object):
     def __init__(self, method_name):
         self.method_name = method_name
 
-    def __call__(self, obj, fieldspec, context):
+    def __call__(self, obj, spec, ctx):
         method = getattr(obj, self.method_name)
         data = method()
-        return serialize_dict(data, fieldspec, context)
+        return serialize_dict(data, spec, ctx)
 
 
-def serialize_object(obj, fieldspec, context):
+def serialize_object(obj, spec, ctx):
     """ Serialize any object.
 
     This should have the lowest priority as it will work for almost anything
@@ -103,7 +101,7 @@ def serialize_object(obj, fieldspec, context):
     the system very flexible but at the same time it might slow down the
     serialization time significantly.
     """
-    if fieldspec is True or fieldspec.empty():
+    if spec is True or spec.empty():
         return {}
 
     filters = [
@@ -112,12 +110,12 @@ def serialize_object(obj, fieldspec, context):
         lambda n, v: not is_file(v),
     ]
 
-    def is_val(attrname, attrvalue):
+    def is_val(attr_name, attr_value):
         """
         Check if the given attribute is a value that should be serialized.
         """
         try:
-            return all(flt(attrname, attrvalue) for flt in filters)
+            return all(flt(attr_name, attr_value) for flt in filters)
         except:
             return False
 
@@ -125,16 +123,16 @@ def serialize_object(obj, fieldspec, context):
     for name in dir(obj):
         if not isinstance(name, string_types):
             pass
-        if name in fieldspec:
+        if name in spec:
             try:
                 value = getattr(obj, name)
             except Exception as ex:
                 value = "({}: {})".format(ex.__class__.__name__, str(ex))
-                if context.reraise:
+                if ctx.reraise:
                     raise
 
             if is_val(name, value):
                 ret[name] = serialize.raw(
-                    value, fieldspec[name], context
+                    value, spec[name], ctx
                 )
     return ret
