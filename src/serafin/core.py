@@ -10,10 +10,10 @@ from datetime import date as Date, datetime as Datetime
 from logging import getLogger
 
 # 3rd party imports
-from jsobj import jsobj
 from six import iteritems, string_types
 
 # local imports
+from .context import Context
 from .fieldspec import Fieldspec
 from .util import iterable, is_file
 
@@ -22,7 +22,7 @@ L = getLogger(__name__)
 
 
 def dump_val(name, value):
-    """ The default implementation for object dump passed to jsobj. """
+    """ The default implementation for object dump passed to Context. """
     if isinstance(value, (Date, Datetime)):
         return value.isoformat()
     return value
@@ -50,7 +50,7 @@ class Serializer(object):
 
     **Examples**
 
-    With the following data (same applies to django models and ``jsobj``):
+    With the following data (same applies to django models and ``Context``):
 
     >>> model = {
     ...     'field1': 10,
@@ -153,15 +153,15 @@ class Serializer(object):
         elif fieldspec is None:
             fieldspec = Fieldspec('*')
 
-        context = jsobj(
+        ctx = Context(
             dumpval=dump_val,
             reraise=True,
         )
-        context.update(kwargs)
+        ctx.update(kwargs)
 
-        return self.raw(obj, fieldspec, context)
+        return self.raw(obj, fieldspec, ctx)
 
-    def raw(self, obj, fieldspec, context):
+    def raw(self, obj, fieldspec, ctx):
         """ Raw serialize without parsing the fieldspec.
 
         This method should be used when writing new serializers for performance
@@ -176,7 +176,7 @@ class Serializer(object):
 
         :param Any obj:
         :param Fieldspec fieldspec:
-        :param dict context:
+        :param dict ctx:
         :return dict|list|str|int:
             Returns an object that can be directly dumped to JSON.
         """
@@ -217,10 +217,10 @@ class Serializer(object):
 
         # Do the actual serialization
         try:
-            out = serializer(obj, fieldspec, context)
+            out = serializer(obj, fieldspec, ctx)
         except Exception as ex:
             out = "({}: {})".format(ex.__class__.__name__, str(ex))
-            if context.reraise:
+            if ctx.get('reraise', True):
                 raise
 
         return out

@@ -19,10 +19,15 @@ to pass the fieldspec describing how he wants the output to be formatted.
 .. autofunction:: serafin.core.serialize
 
 """
+from __future__ import absolute_import, unicode_literals
+from .context import Context
 from .core import serialize
-from .serializers import *     # pylint: disable=wildcard-import
 from .fieldspec import Fieldspec
+from .serializers import *     # pylint: disable=wildcard-import
+
+
 __all__ = [
-    'serialize',
+    'Context',
     'Fieldspec',
+    'serialize',
 ]
