@@ -32,3 +32,13 @@ test:
     - mv docs/html .build/docs
     - cp .build/test-results.xml $CIRCLE_TEST_REPORTS/
     - mv .build/** "$CIRCLE_ARTIFACTS/"
+
+
+deployment:
+  pypi:
+    branch: master
+    commands:
+      - fab gen_pypirc
+      - fab upload:pypi
+      - rm ~/.pypirc
+
