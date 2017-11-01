@@ -10,13 +10,18 @@ conf.init({
     'SRC_DIR': 'src',
     'SRC_PATH': 'src/serafin',
     'BUILD_DIR': '.build',
-    'PKGS_PATHS': [
+    'LINT_PATHS': [
+        'src/serafin',
+        'ops/commands',
+        'test'
+    ],
+    'REFDOC_PATHS': [
         'src/serafin',
         'ops/commands',
     ],
     'TEST_TYPES': {
         'default': {'paths': [
-            'src/serafin',
+            'test',
             'ops/commands',
         ]}
     }

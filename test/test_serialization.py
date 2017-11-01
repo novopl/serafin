@@ -7,7 +7,7 @@ import unittest
 from functools import partial
 
 # local imports
-from .. import Context, serialize
+from serafin import Context, serialize
 
 
 class CustomClass(Context):

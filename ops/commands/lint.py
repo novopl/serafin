@@ -16,7 +16,7 @@ from .common import log
 
 PYLINT_CFG_PATH = conf.get_path('PYLINT_CFG_PATH', 'ops/tools/pylint.ini')
 PEP8_CFG_PATH = conf.get_path('PEP8_CFG_PATH', 'ops/tools/pep8.ini')
-PKGS_PATHS = conf.get('PKGS_PATHS', [])
+LINT_PATHS = conf.get('LINT_PATHS', [])
 
 
 def _lint_files(paths):
@@ -52,5 +52,5 @@ def _lint_files(paths):
 
 def lint():
     """ Run pep8 and pylint on all project files. """
-    if not _lint_files([conf.proj_path(p) for p in PKGS_PATHS]):
+    if not _lint_files([conf.proj_path(p) for p in LINT_PATHS]):
         exit(1)

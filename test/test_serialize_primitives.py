@@ -7,10 +7,10 @@ from unittest import TestCase
 from datetime import datetime
 
 # local imports
-from .. import Context
-from ..core import dump_val
-from ..serializers import serialize_primitive
-from ..fieldspec import Fieldspec
+from serafin import Context
+from serafin.core import dump_val
+from serafin.serializers import serialize_primitive
+from serafin.fieldspec import Fieldspec
 
 
 class TestPrimitives(TestCase):
