@@ -21,7 +21,7 @@ from .common import log
 
 BUILD_DIR = conf.get_path('BUILD_DIR', '.build')
 DOC_SRC_PATH = conf.get_path('DOC_SRC_PATHS', 'docs')
-PKGS_PATHS = conf.get('PKGS_PATHS', [])
+REFDOC_PATHS = conf.get('REFDOC_PATHS', [])
 
 DOC_OUT_PATH = os.path.join(DOC_SRC_PATH, 'html')
 DOC_REF_PATH = os.path.join(DOC_SRC_PATH, 'ref')
@@ -47,7 +47,7 @@ def docs(recreate='no'):
         os.makedirs(DOC_REF_PATH)
 
         log.info('Generating reference documentation')
-        pkg_paths = [conf.proj_path(p) for p in PKGS_PATHS]
+        pkg_paths = [conf.proj_path(p) for p in REFDOC_PATHS]
         _generate_docs(pkg_paths, out_dir=DOC_REF_PATH)
     else:
         log.err('Not generating any reference documentation - '

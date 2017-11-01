@@ -15,9 +15,6 @@ from .common import conf
 from .common import fs
 
 
-SRC_DIR = conf.get_path('SRC_DIR')
-SRC_PATH = conf.get_path('SRC_PATH')
-
 BUILD_DIR = conf.get_path('BUILD_DIR', '.build')
 
 PYTEST_CFG_PATH = conf.get_path('PYTEST_CFG_PATH', 'ops/tools/pytest.ini')
@@ -32,7 +29,9 @@ DJANGO_TEST_SETTINGS = conf.get('DJANGO_TEST_SETTINGS', None)
 
 def test(**opts):
     """ Run all tests against the current python version. """
-    args = []
+    SRC_DIR = conf.get_path('SRC_DIR')
+    SRC_PATH = conf.get_path('SRC_PATH')
+
     sugar = conf.is_true(opts.get('sugar', 'on'))
     junit = conf.is_true(opts.get('junit', 'off'))
     test_type = opts.get('type', 'default')
@@ -40,6 +39,8 @@ def test(**opts):
     show_locals = conf.is_true(opts.get('locals', 'on'))
     coverage = conf.is_true(opts.get('coverage', 'on'))
     plugins = opts.get('plugins', '').split(',')
+
+    args = []
 
     if coverage:
         args += [
