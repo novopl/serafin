@@ -6,10 +6,10 @@ from __future__ import absolute_import, unicode_literals
 from unittest import TestCase
 
 # local imports
-from .. import Context
-from ..core import dump_val
-from ..serializers import serialize_iterable
-from ..fieldspec import Fieldspec
+from serafin import Context
+from serafin.core import dump_val
+from serafin.serializers import serialize_iterable
+from serafin.fieldspec import Fieldspec
 
 
 class TestSerializeIterable(TestCase):
