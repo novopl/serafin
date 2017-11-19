@@ -24,8 +24,8 @@ Setting up development repo
 
 .. code-block:: shell
 
-    $ git clone git@github.com:novopl/sphinx-refdoc.git
-    $ cd sphinx-refdoc
+    $ git clone git@github.com:novopl/serafin.git
+    $ cd serafin
     $ virtualenv env
     $ source ./env/bin/activate
-    $ pip install -r requirements.txt -r devrequirements.txt
+    $ pip install -r devrequirements.txt

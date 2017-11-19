@@ -70,7 +70,7 @@ def serialize_file_handle(obj, spec, ctx):
 
 def serialize_serializable(obj, spec, ctx):
     """ Serialize any class that defines a ``serialize`` method. """
-    return obj.serialize(spec, ctx)
+    return obj.serafin_serialize(spec, ctx)
 
 
 class ThirdPartySerializer(object):
