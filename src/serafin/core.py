@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 # stdlib imports
 from collections import OrderedDict
-from datetime import date as Date, datetime as Datetime
+from datetime import date, datetime
 from logging import getLogger
 
 # 3rd party imports
@@ -23,9 +23,12 @@ L = getLogger(__name__)
 
 def dump_val(name, value):
     """ The default implementation for object dump passed to Context. """
-    if isinstance(value, (Date, Datetime)):
-        return value.isoformat()
-    return value
+    if isinstance(value, datetime):
+        return value.strftime('%Y-%m-%dT%H:%M:%S')
+    elif isinstance(value, date):
+        return value.strftime('%Y-%m-%d')
+    else:
+        return value
 
 
 class Serializer(object):

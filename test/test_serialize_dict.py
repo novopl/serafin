@@ -32,7 +32,7 @@ class TestSerializeDict(TestCase):
             'field4':  {}
         })
 
-    def test_converts_string_to_Fieldspec(self):
+    def test_converts_string_to_fieldspec(self):
         ctx = Context(dumpval=dump_val)
         output = serialize_dict({'test': 123}, Fieldspec('*'), ctx)
         self.assertDictEqual(output, {'test': 123})
