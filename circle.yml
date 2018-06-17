@@ -1,18 +1,16 @@
 machine:
   post:
     - pyenv install --skip-existing 2.7.12
-    - pyenv install --skip-existing 3.3.6
     - pyenv install --skip-existing 3.4.5
     - pyenv install --skip-existing 3.5.2
     - pyenv install --skip-existing 3.6.2
-    - pyenv global 2.7.12 3.3.6 3.4.5 3.5.2 3.6.2
+    - pyenv global 2.7.12 3.4.5 3.5.2 3.6.2
 
 
 dependencies:
   cache_directories:
     - /opt/circleci/python
     - ./.tox/py27
-    - ./.tox/py33
     - ./.tox/py34
     - ./.tox/py35
     - ./.tox/py36
@@ -24,9 +22,9 @@ dependencies:
 
 test:
   override:
-    - fab lint
+    - peltak lint
     - tox
-    - fab docs
+    - peltak docs
 
   post:
     - mv docs/html .build/docs
@@ -38,7 +36,9 @@ deployment:
   pypi:
     branch: master
     commands:
-      - fab gen_pypirc
-      - fab upload:pypi
+      - peltak release gen-pypirc
+      - peltak release upload pypi
       - rm ~/.pypirc
+      - peltak release tag
+      - "git push origin v$(peltak version show --porcelain)"
 
