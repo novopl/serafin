@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 # stdlib imports
 import types
+import inspect
 
 # 3rd party imports
 from six import string_types
