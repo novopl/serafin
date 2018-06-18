@@ -25,7 +25,7 @@ def make_serializer(model_base_class):
 
         props = list(util.iter_public_props(obj, lambda n, v: n in spec))
         data.update({
-            name: serafin_serialize.raw(value, spec[name], ctx)
+            name: serialize.raw(value, spec[name], ctx)
             for name, value in props
         })
 
@@ -43,6 +43,6 @@ def _serialize_flask_model_fields(model, spec, ctx):
     for name, _ in columns:
         if name in spec:
             value = getattr(model, name)
-            ret[name] = serafin_serialize.raw(value, spec[name], ctx)
+            ret[name] = serialize.raw(value, spec[name], ctx)
 
     return ret
