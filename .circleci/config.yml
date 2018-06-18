@@ -18,7 +18,7 @@ jobs:
           paths:
           - /usr/local/bin
           - /usr/local/lib/python3.6/site-packages
-          - .tox
+          - /home/circleci/project/.tox
       - run: peltak docs
       # - run: peltak lint
       - store_test_results:
