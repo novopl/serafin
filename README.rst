@@ -9,8 +9,12 @@ kinds of python object into something that can be dumped to JSON or YAML.
 .. note::
     This library is a bit older code of mine, but I've been using it for years
     now in my private projects and it's been pretty stable. The code is quite
-    well tested except for integrations with sqlachemy and django which are
+    well tested except for integrations with SQLAchemy and django which are
     quite recent additions.
+
+.. note::
+    The CircleCI builds can be found
+    `here <https://circleci.com/gh/novopl/serafin>`_
 
 .. readme_inclusion_marker
 
