@@ -8,8 +8,8 @@ from unittest import TestCase
 # local imports
 from serafin import Context
 from serafin.core import dump_val
-from serafin.serializers import serialize_iterable
-from serafin.fieldspec import Fieldspec
+from serafin.core.serializers import serialize_iterable
+from serafin.core.fieldspec import Fieldspec
 
 
 class TestSerializeIterable(TestCase):

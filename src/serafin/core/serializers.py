@@ -18,7 +18,7 @@ from logging import getLogger
 from six import integer_types, string_types, binary_type
 
 # local imports
-from .core import serialize
+from .serializer import serialize
 from .util import is_file
 
 # Try to import Enum so it's nicely serializable

@@ -7,7 +7,7 @@ from django.db.models import Model
 
 # local imports
 from . import serialize
-from . import util
+from .core import util
 
 
 @serialize.type(Model)

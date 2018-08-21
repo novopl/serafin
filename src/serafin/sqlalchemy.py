@@ -2,12 +2,9 @@
 """ Serafin integration with SQLAlchemy. """
 from __future__ import absolute_import, unicode_literals
 
-# 3rd party imports
-from . import serialize
-from .core import serialize
-
 # local imports
-from . import util
+from . import serialize
+from .core import util
 
 
 def make_serializer(model_base_class):
