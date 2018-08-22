@@ -210,10 +210,8 @@ class Serializer(object):
                         break
                 else:
                     # Try if we can find 3rd party serializers.
-                    if callable(getattr(obj, 'as_dict', None)):
-                        serializer = ThirdPartySerializer('as_dict')
-                    elif callable(getattr(obj, 'to_dict', None)):
-                        serializer = ThirdPartySerializer('as_dict')
+                    if callable(getattr(obj, 'serafin_serialize', None)):
+                        serializer = ThirdPartySerializer('serafin_serialize')
                     else:
                         # As a last resort try generic serialize_object
                         serializer = serialize_object

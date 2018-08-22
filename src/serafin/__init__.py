@@ -21,10 +21,10 @@ to pass the field spec describing how he wants the output to be formatted.
 
 """
 from __future__ import absolute_import, unicode_literals
-from .context import Context
-from .core import serialize
-from .fieldspec import Fieldspec
-from .serializers import *     # pylint: disable=wildcard-import
+from .core.context import Context
+from .core.fieldspec import Fieldspec
+from .core.serializer import serialize
+from .core.serializers import *     # pylint: disable=wildcard-import
 
 
 __all__ = [
