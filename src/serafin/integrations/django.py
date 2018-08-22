@@ -6,8 +6,8 @@ from __future__ import absolute_import, unicode_literals
 from django.db.models import Model
 
 # local imports
-from . import serialize
-from . import util
+from serafin import serialize
+from serafin.core import util
 
 
 @serialize.type(Model)
@@ -16,15 +16,13 @@ def serialize_django_model(obj, spec, ctx):
     if spec is True or spec.empty():
         return {}
 
-    data = serialize_model_fields(obj, spec, ctx)
-
     props = list(util.iter_public_props(obj, lambda n, v: n in spec))
-    data.update({
-        name: serialize.raw(value, spec[name], ctx)
-        for name, value in props
-    })
+    ret = {}
 
-    return data
+    ret.update(serialize_model_fields(obj, spec, ctx))
+    ret.update({key: serialize.raw(val, spec[key], ctx) for key, val in props})
+
+    return ret
 
 
 def serialize_model_fields(model, fieldspec, context):

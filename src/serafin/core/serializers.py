@@ -18,8 +18,17 @@ from logging import getLogger
 from six import integer_types, string_types, binary_type
 
 # local imports
-from .core import serialize
+from .serializer import serialize
 from .util import is_file
+
+# Try to import Enum so it's nicely serializable
+try:
+    from enum import Enum
+except ImportError:
+    try:
+        from enum34 import Enum
+    except:
+        Enum = None
 
 
 L = getLogger(__name__)
@@ -136,3 +145,10 @@ def serialize_object(obj, spec, ctx):
                     value, spec[name], ctx
                 )
     return ret
+
+
+if Enum is not None:
+    @serialize.type(Enum)
+    def serialize_enum(obj, spec, ctx):
+        """ Serialize python3.4 Enum item. """
+        return obj.value
