@@ -6,8 +6,8 @@ from __future__ import absolute_import, unicode_literals
 from django.db.models import Model
 
 # local imports
-from . import serialize
-from .core import util
+from serafin import serialize
+from serafin.core import util
 
 
 @serialize.type(Model)

@@ -3,8 +3,8 @@
 from __future__ import absolute_import, unicode_literals
 
 # local imports
-from . import serialize
-from .core import util
+from serafin import serialize
+from serafin.core import util
 
 
 def make_serializer(model_base_class):

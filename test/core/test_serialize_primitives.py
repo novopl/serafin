@@ -8,9 +8,9 @@ from datetime import datetime
 
 # local imports
 from serafin import Context
-from serafin.core import dump_val
-from serafin.core.serializers import serialize_primitive
 from serafin.core.fieldspec import Fieldspec
+from serafin.core.serializer import dump_val
+from serafin.core.serializers import serialize_primitive
 
 
 class TestPrimitives(TestCase):
