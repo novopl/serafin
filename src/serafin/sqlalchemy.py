@@ -18,15 +18,13 @@ def make_serializer(model_base_class):
         if spec is True or spec.empty():
             return {}
 
-        data = _serialize_flask_model_fields(obj, spec, ctx)
-
         props = list(util.iter_public_props(obj, lambda n, v: n in spec))
-        data.update({
-            name: serialize.raw(value, spec[name], ctx)
-            for name, value in props
-        })
+        ret = {}
 
-        return data
+        ret.update(_serialize_flask_model_fields(obj, spec, ctx))
+        ret.update({k: serialize.raw(val, spec[k], ctx) for k, val in props})
+
+        return ret
 
     return serialize_flask_model
 

@@ -25,7 +25,7 @@ else:
 from six import string_types, iteritems     # noqa
 
 
-kFieldPtrn = re.compile(r'{name}(\({members}\))?'.format(
+RE_FIELD = re.compile(r'{name}(\({members}\))?'.format(
     name=r'(?P<name>-?[\w\d_*]+)',
     members=r'(?P<members>[\w\d_\-,*)(]+)'
 ))
@@ -177,7 +177,7 @@ class Fieldspec(object):
         """
         fields  = self._splitfields(string)
         for field in fields:
-            m = kFieldPtrn.match(field)
+            m = RE_FIELD.match(field)
             if not m:
                 raise ValueError("Invalid field specification")
 
