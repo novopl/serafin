@@ -5,7 +5,7 @@ import sphinx_rtd_theme
 
 
 project = u"serafin"
-copyright = u"2016-2017, Mateusz 'novo' Klos"
+copyright = u"2016-2018, Mateusz 'novo' Klos"
 author = u"Mateusz 'novo' Klos"
 
 
@@ -30,8 +30,9 @@ extensions = [
     'sphinx.ext.viewcode',
 ]
 
-version = read('../VERSION').strip()
-release = read('../VERSION').strip()
+import serafin
+version = serafin.__version__
+release = serafin.__version__
 doctest_test_doctest_blocks='default'
 templates_path = [repo_path('docs/_templates')]
 source_suffix = '.rst'
