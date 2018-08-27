@@ -9,13 +9,15 @@ RE_PY_VERSION = re.compile(
     r'["\']'
 )
 
-def read_version():
-    content = read('src/restible/__init__.py')
+
+def read_version(path):
+    content = read(path)
     m = RE_PY_VERSION.search(content)
     if not m:
         return '0.0'
     else:
         return m.group('version')
+
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -23,7 +25,7 @@ def read(fname):
 
 setup(
     name="serafin",
-    version=read_version(),
+    version=read_version('src/serafin/__init__.py'),
     author="Mateusz 'novo' Klos",
     author_email="novopl@gmail.com",
     license="MIT",
