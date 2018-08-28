@@ -63,7 +63,7 @@ class Fieldspec(object):
     >>> fs['field2']['sub2']
     True
 
-    And wildcards
+    And wildcards:
     >>> 'asdf' in fs['field2']
     False
     >>> 'asdf' in fs['field3']
@@ -71,7 +71,8 @@ class Fieldspec(object):
     >>> fs['field3']['asdf']
     True
 
-    Exclude
+    Exclude:
+
     >>> fs = Fieldspec('*,-field1')
     >>> 'asdf' in fs
     True
@@ -87,24 +88,27 @@ class Fieldspec(object):
     The ``fields`` member is a list of tuples ``(name, members)`` where name
     is the fields name and members is the optional member spec **members** can
     be one of:
+
         - None
         - ``True`` if the subfield spec is just the field name, ie ``field``.
         - ``Fieldspec`` if the subfield has a field spec defined, ie
-         ``field(sub1,sub2)``.
+          ``field(sub1,sub2)``.
 
     If the field spec contains ``*`` it means at that level all fields are
     included by default. You can still exclude them using ``-`` but by default
     all fields within an object are included.
 
     The special field spec `**` can be used and it means the same thing as ``*``
-    but is applied recursively to all objects. **Be very careful with using it
+    but is applied recursively to all objects. **Be very careful** with using it
     as it will try to serialize EVERYTHING and in many cases you will run into
     problems.
 
     TODO:
+
         - Ability to specify max depth.
         - Merging two specs together (union).
         - Restricting one spec by another (intersection).
+
     """
     def __init__(self, spec='*'):
         self.fields = OrderedDict()
@@ -233,9 +237,9 @@ class Fieldspec(object):
         """ Extend field spec using a different one. The result should be
         the union of both.
 
-        .. notes:: If the field is in both specs and it's values are different
-        there is a conflict. The conflict can be resolved by merging the sub
-        specs.
+        .. note:: If the field is in both specs and it's values are different
+            there is a conflict. The conflict can be resolved by merging the sub
+            specs.
         """
         if isinstance(spec, string_types):
             spec = Fieldspec(spec)
