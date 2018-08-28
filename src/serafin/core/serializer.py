@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Contains the core serializer functionality.
-"""
+""" Contains the core serializer functionality. """
 from __future__ import absolute_import
 
 # stdlib imports
@@ -37,12 +35,12 @@ class Serializer(object):
     This will serialize the object based on the field spec passed.
 
     Args:
-        obj (anything):
+        obj dict:
             The serialized object. Whether the object will be serialized
             depends on if there is a serializer defined for that object.
-        spec (Fieldspec or str):
+        spec Union[Fieldspec, str]:
             Fieldspec according to which the object will be serialized.
-        dumpval (Function):
+        dumpval Function:
             The value dumping function. This will be used to serialize
             primitive types.
 
