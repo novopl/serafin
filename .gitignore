@@ -37,6 +37,7 @@ env
 frontend/dist
 frontend/node_modules
 /docs/html/
+/docs/doctest/
 /docs/ref
 
 

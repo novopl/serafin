@@ -8,6 +8,54 @@ is being included in the resulting data.
 
 This module **has** to be really well tested as everything else depends on it
 and the implementation itself is a bit tricky.
+
+Usage
+=====
+
+**Example field spec**
+
+>>> from serafin import Fieldspec
+>>>
+>>> fs = Fieldspec('field1,field2(sub1,sub2),field3(*)')
+>>> fs
+<Fieldspec: field1,field2,field3>
+
+**Easily check if the field is matched by the spec**
+
+>>> 'field1' in fs
+True
+>>> fs['field1']
+True
+>>> 'field7' in fs
+False
+
+**Supports nested specifications**
+
+>>> fs['field2']
+<Fieldspec: sub1,sub2>
+>>> 'sub1' in fs['field2']
+True
+>>> fs['field2']['sub2']
+True
+
+
+**And wildcards**
+
+>>> 'asdf' in fs['field2']
+False
+>>> 'asdf' in fs['field3']
+True
+>>> fs['field3']['asdf']
+True
+
+**You can exclude fields as well**
+
+>>> fs = Fieldspec('*,-field1')
+>>> 'asdf' in fs
+True
+>>> 'field1' in fs
+False
+
 """
 from __future__ import absolute_import, unicode_literals
 
@@ -40,44 +88,6 @@ class Fieldspec(object):
     itself (with all, or selected members).
 
     For usage examples see ``restapi.serialize.serialize()``.
-
-    **Simple tests**
-
-    >>> fs = Fieldspec('field1,field2(sub1,sub2),field3(*)')
-    >>> fs
-    <Fieldspec: field1,field2,field3>
-
-    Easily check if the field is matched by the spec:
-    >>> 'field1' in fs
-    True
-    >>> fs['field1']
-    True
-    >>> 'field7' in fs
-    False
-
-    Supports nested specifications:
-    >>> fs['field2']
-    <Fieldspec: sub1,sub2>
-    >>> 'sub1' in fs['field2']
-    True
-    >>> fs['field2']['sub2']
-    True
-
-    And wildcards:
-    >>> 'asdf' in fs['field2']
-    False
-    >>> 'asdf' in fs['field3']
-    True
-    >>> fs['field3']['asdf']
-    True
-
-    Exclude:
-
-    >>> fs = Fieldspec('*,-field1')
-    >>> 'asdf' in fs
-    True
-    >>> 'field1' in fs
-    False
 
     **Implementation**
 
