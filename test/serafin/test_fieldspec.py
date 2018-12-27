@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals
 from unittest import TestCase
 
 # local imports
-from serafin.core.fieldspec import Fieldspec
+from serafin.fieldspec import Fieldspec
 
 
 class FieldspecTest(TestCase):

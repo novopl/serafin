@@ -9,10 +9,10 @@ the context of API endpoints where we can write one endpoint and allow client
 to pass the field spec describing how he wants the output to be formatted.
 """
 from __future__ import absolute_import, unicode_literals
-from .core.context import Context
-from .core.fieldspec import Fieldspec
-from .core.serializer import serialize
-from .core.serializers import *     # pylint: disable=wildcard-import
+from .context import Context
+from .fieldspec import Fieldspec
+from .serializer import serialize
+from .serializers import *     # pylint: disable=wildcard-import
 __version__ = '0.10.2'
 
 

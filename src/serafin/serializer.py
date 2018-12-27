@@ -185,8 +185,8 @@ class Serializer(object):
         if obj is None:
             return None
 
-        # Check if we have a direct serializer for the class
         try:
+            # Check if we have a direct serializer for the class
             serializer = self.classmap[obj.__class__]
         except KeyError:
             # Hacky speedups
@@ -208,10 +208,10 @@ class Serializer(object):
                         break
                 else:
                     # Try if we can find 3rd party serializers.
-                    if callable(getattr(obj, 'serafin_serialize', None)):
-                        serializer = ThirdPartySerializer('serafin_serialize')
+                    if callable(getattr(obj, 'to_dict', None)):
+                        serializer = ThirdPartySerializer('to_dict')
                     else:
-                        # As a last resort try generic serialize_object
+                        # Try the generic serialize_object as a last resort
                         serializer = serialize_object
 
         # Do the actual serialization
