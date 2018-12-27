@@ -1,0 +1,36 @@
+pelconf_version: '1'
+src_dir: src
+src_path: src/serafin
+build_dir: .build
+version_file: src/serafin/__init__.py
+
+commands:
+  - peltak.commands.docs
+  - peltak.commands.git
+  - peltak.commands.lint
+  - peltak.commands.test
+  - peltak.commands.version
+  - peltak.extra.gitflow
+
+clean:
+  exclude:
+    - '.tox'
+    - 'env'
+
+lint:
+  paths:
+    - src/serafin
+    - test
+
+
+docs:
+  path: docs
+  reference:
+    - src/serafin
+
+
+test:
+  types:
+    default:
+      paths:
+        - test/serafin
