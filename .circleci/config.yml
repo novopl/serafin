@@ -35,8 +35,11 @@ jobs:
           - .tox
 
       - run:
-          name: Generate Docs
-          command: peltak docs
+          name: Build Documentation
+          command: |
+            peltak docs --recreate --run-doctests --gen-index
+            mv docs/html docs/peltak-docs
+            cd docs && zip -r ../.build/peltak-docs.zip peltak-docs
 
       - store_test_results:
           path: .build
@@ -44,8 +47,7 @@ jobs:
           path: .build/coverage/
           destination: coverage
       - store_artifacts:
-          path: docs/html
-          destination: docs
+          path: .build/peltak-docs.zip
 
   release:
     docker:
