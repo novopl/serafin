@@ -7,10 +7,18 @@ serafin
 kinds of python object into something that can be dumped to JSON or YAML.
 
 .. note::
-    This library is a bit older code of mine, but I've been using it for years
-    now in my private projects and it's been pretty stable. The code is quite
-    well tested except for integrations with SQLAchemy and django which are
-    quite recent additions.
+The project follows the semantic versioning scheme: Until 1.0 the minor
+
+        * The *patch* versions only include bugfixes and changes that do not
+          modify the existing interface. You can safely update a patch version
+          without worrying it will break your code.
+        * The *minor* versions will contain changes to the interface. With a
+          single version update your code will most likely work or might require
+          small adjustments. The more minor versions you update at once the
+          bigger the chance that something will brake.
+        * The *major* versions are reserved for significant refactorings and
+          architecture changes. This should not happen very often so the major
+          version should not change much.
 
 .. note::
     The CircleCI builds can be found
@@ -29,8 +37,8 @@ Installation
 Contributing
 ============
 
-Setting up development repo
----------------------------
+Cloning and setting up the development repo
+-------------------------------------------
 
 .. code-block:: shell
 
@@ -38,6 +46,7 @@ Setting up development repo
     $ cd serafin
     $ virtualenv env
     $ source ./env/bin/activate
+    $ pip install .
     $ pip install -r ops/devrequirements.txt
     $ peltak git add-hoooks
 

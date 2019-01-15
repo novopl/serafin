@@ -7,30 +7,34 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: deps-rev1-{{ checksum "requirements.txt" }}
-      - restore_cache:
-          key: tox-rev2-{{ checksum "requirements.txt" }}-{{ checksum "ops/devrequirements.txt" }}
+          key: deps-rev1-{{ checksum "setup.py" }}
 
       - run:
           name: Setup dependencies
           command: |
             which pip
             which python
-            pip install -r requirements.txt
+            python --version
+            pip --version
+            pip install .
             pip install -r ops/devrequirements.txt
             peltak --help
-            python setup.py develop
 
       - run:
           name: Lint
           command: peltak lint
+
+      - restore_cache:
+          name: Restoring tox cache
+          key: tox-rev1-{{ checksum "setup.py" }}-{{ checksum "ops/devrequirements.txt" }}
 
       - run:
           name: Test
           command: tox
 
       - save_cache:
-          key: tox-rev2-{{ checksum "requirements.txt" }}-{{ checksum "ops/devrequirements.txt" }}
+          name: Saving tox cache
+          key: tox-rev1-{{ checksum "setup.py" }}-{{ checksum "ops/devrequirements.txt" }}
           paths:
           - .tox
 
@@ -38,8 +42,8 @@ jobs:
           name: Build Documentation
           command: |
             peltak docs --recreate --run-doctests
-            mv docs/html docs/peltak-docs
-            cd docs && zip -r ../.build/peltak-docs.zip peltak-docs
+            mv docs/html docs/serafin-docs
+            cd docs && zip -r ../.build/serafin-docs.zip serafin-docs
 
       - store_test_results:
           path: .build
@@ -47,7 +51,8 @@ jobs:
           path: .build/coverage/
           destination: coverage
       - store_artifacts:
-          path: .build/peltak-docs.zip
+          path: .build/serafin-docs.zip
+          destination: serafin-docs.zip
 
   release:
     docker:
@@ -55,13 +60,24 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: deps-rev1-{{ checksum "requirements.txt" }}
-      - run: python setup.py develop
-      - run: peltak pypi configure
-      - run: peltak pypi upload
-      - run: rm ~/.pypirc
-      - run: peltak release tag
-      - run: "git push origin v$(peltak version --porcelain)"
+          key: deps-rev1-{{ checksum "setup.py" }}
+
+      - run:
+          name: Setup
+          command: pip install .
+
+      - run:
+          name: Upload to pypi
+          command: |
+            peltak pypi configure
+            peltak pypi upload
+            rm ~/.pypirc
+
+      - run:
+          name: Create release tag
+          command: |
+            peltak release tag -m "$(peltak changelog)"
+            git push origin v$(peltak version --porcelain)
 
 
 workflows:
