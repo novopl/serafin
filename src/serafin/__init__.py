@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright 2017-2019 Mateusz Klos
+# Copyright 2016-2019 Mateusz Klos
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ from .context import Context
 from .fieldspec import Fieldspec
 from .serializer import serialize
 from .serializers import *     # pylint: disable=wildcard-import
-__version__ = '0.12'
+__version__ = '0.12.1'
 
 
 __all__ = [
