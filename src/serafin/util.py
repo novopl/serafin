@@ -74,13 +74,15 @@ def iter_public_props(obj, predicate=None):
             if name.startswith('_'):
                 continue
 
-            member = getattr(obj_type, name)
-            if not isinstance(member, property):
-                continue
-
             try:
+                member = getattr(obj_type, name)
+                if not isinstance(member, property):
+                    continue
+
                 value = getattr(obj, name)
+
                 if predicate(name, value):
                     yield name, value
+
             except AttributeError:
                 pass

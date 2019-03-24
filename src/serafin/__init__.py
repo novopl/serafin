@@ -26,7 +26,7 @@ from .context import Context
 from .fieldspec import Fieldspec
 from .serializer import serialize
 from .serializers import *     # pylint: disable=wildcard-import
-__version__ = '0.12.1'
+__version__ = '0.12.2'
 
 
 __all__ = [
